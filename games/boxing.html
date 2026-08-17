@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wii Sports Boxing - Parkinson's Exergame</title>
+    <!-- MediaPipe Pose -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #e0f2fe; font-family: "Arial Rounded MT Bold", "VAG Rounded", "Century Gothic", "Trebuchet MS", sans-serif; }
+        
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            pointer-events: none;
+        }
+
+        /* Wii Plastic/Glassy panels */
+        .dashboard, .instructions {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(8px);
+            border: 4px solid #bae6fd;
+            border-radius: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), inset 0 0 20px rgba(255,255,255,1);
+            color: #334155;
+            pointer-events: auto;
+        }
+
+        .dashboard {
+            padding: 16px 36px;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 900;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            border-left: 3px dotted #bae6fd;
+            padding-left: 24px;
+            align-items: center;
+        }
+
+        .btn {
+            position: relative;
+            padding: 10px 22px;
+            border-radius: 40px;
+            border: 3px solid #cbd5e1;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.1), inset 0 -4px 6px rgba(0,0,0,0.15);
+            color: #475569;
+            background: linear-gradient(to bottom, #ffffff 0%, #f1f5f9 45%, #e2e8f0 50%, #cbd5e1 100%);
+            text-shadow: 1px 1px 0 #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary { 
+            border-color: #7dd3fc;
+            background: linear-gradient(to bottom, #ffffff 0%, #e0f2fe 45%, #bae6fd 50%, #7dd3fc 100%);
+            color: #0369a1;
+        }
+
+        .btn:hover:not(:disabled) { 
+            transform: scale(1.05); 
+            border-color: #38bdf8;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15), inset 0 -4px 6px rgba(0,0,0,0.1), 0 0 12px rgba(56,189,248,0.4);
+            color: #0284c7;
+        }
+        
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1), inset 0 4px 6px rgba(0,0,0,0.15);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+        .camera-status {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            margin-left: 10px;
+        }
+
+        .camera-dot {
+            width: 14px; height: 14px; border-radius: 50%; background: #f59e0b;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        .camera-dot.active { 
+            background: #22c55e; 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 0 12px rgba(34, 197, 94, 0.8); 
+        }
+
+        .hud-bottom {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            pointer-events: none;
+            padding-bottom: 10px;
+        }
+
+        .instructions {
+            padding: 10px 26px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .instructions p { font-size: 15px; line-height: 1.4; margin: 0; color: #475569; }
+        .instructions strong { color: #0284c7; font-weight: bold; }
+
+        #videoElement { display: none; }
+        
+        #floatingMsg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 46px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            text-align: center;
+            z-index: 100;
+        }
+        
+        #floatingMsg.show {
+            opacity: 1;
+            animation: floatUp 0.9s ease forwards;
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+            50% { transform: translate(-50%, -60%) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -70%) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="floatingMsg">Nice Hit!</div>
+
+    <div class="overlay">
+        <div class="hud-top">
+            <div class="dashboard">
+                <div class="stat">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value" id="scoreDisplay" style="color: #0284c7;">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Combo</span>
+                    <span class="stat-value" id="comboDisplay" style="color: #eab308;">0x</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Accuracy</span>
+                    <span class="stat-value" id="accuracyDisplay" style="color: #059669;">0%</span>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary" id="startBtn">▶ Start Game</button>
+                    <button class="btn btn-secondary" id="modeBtn">⚙ Mode: Standard</button>
+                    <button class="btn btn-secondary" id="resetBtn">↻ Reset</button>
+                </div>
+                <div class="camera-status" id="cameraStatusWrap" title="Camera or Keyboard tracking">
+                    <span class="camera-dot" id="cameraDot"></span>
+                    <span id="cameraStatusLabel">Starting Camera...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hud-bottom">
+            <div class="instructions">
+                <p><strong>🥊 How to Box:</strong> Extend arm forward towards targets (or press <strong>A</strong> for Left / <strong>D</strong> for Right, or <strong>Click</strong> targets).</p>
+            </div>
+        </div>
+    </div>
+
+    <video id="videoElement" autoplay playsinline muted></video>
+
+    <script>
+        const gameCanvas = document.getElementById('gameCanvas');
+        const gameCtx = gameCanvas.getContext('2d');
+        const videoElement = document.getElementById('videoElement');
+
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const comboDisplay = document.getElementById('comboDisplay');
+        const accuracyDisplay = document.getElementById('accuracyDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const modeBtn = document.getElementById('modeBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const cameraDot = document.getElementById('cameraDot');
+        const cameraStatusLabel = document.getElementById('cameraStatusLabel');
+        const floatingMsg = document.getElementById('floatingMsg');
+
+        let gameStarted = false;
+        let score = 0;
+        let combo = 0;
+        let totalPunches = 0;
+        let correctPunches = 0;
+        let forgivingMode = false;
+        let cameraActive = false;
+        let isProcessingPose = false;
+        let punchCooldown = 0;
+        const COOLDOWN_FRAMES = 12;
+
+        let target = {
+            x: 0.3,
+            y: 0.4,
+            hand: 'left',
+            radius: 70,
+            active: false,
+            pulse: 0,
+            section: 'top_left'
+        };
+
+        let hitEffect = {
+            x: 0,
+            y: 0,
+            radius: 0,
+            active: false,
+            color: '#fff',
+            rgb: '255,255,255',
+            time: 0
+        };
+
+        let smoothedWrists = {
+            left: {x: 0.3, y: 0.7},
+            right: {x: 0.7, y: 0.7}
+        };
+
+        function resizeCanvas() {
+            gameCanvas.width = window.innerWidth;
+            gameCanvas.height = window.innerHeight;
+            drawGameCanvas({left: smoothedWrists.left, right: smoothedWrists.right}, null, null);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function updateUI() {
+            scoreDisplay.textContent = score;
+            comboDisplay.textContent = combo + 'x';
+            const acc = totalPunches > 0 ? Math.round((correctPunches / totalPunches) * 100) : 0;
+            accuracyDisplay.textContent = acc + '%';
+        }
+
+        function showMessage(text, color) {
+            floatingMsg.textContent = text;
+            floatingMsg.style.color = color || '#fff';
+            floatingMsg.classList.remove('show');
+            void floatingMsg.offsetWidth;
+            floatingMsg.classList.add('show');
+        }
+
+        function generateTarget(currentWrists) {
+            target.active = true;
+            target.pulse = 0;
+            const sections = ['top_left', 'top_right', 'bottom_left', 'bottom_right'];
+            target.section = sections[Math.floor(Math.random() * sections.length)];
+            
+            if (target.section === 'top_left') {
+                target.x = 0.22 + Math.random() * 0.15;
+                target.y = 0.25 + Math.random() * 0.15;
+                target.hand = 'left';
+            } else if (target.section === 'bottom_left') {
+                target.x = 0.22 + Math.random() * 0.15;
+                target.y = 0.55 + Math.random() * 0.15;
+                target.hand = 'left';
+            } else if (target.section === 'top_right') {
+                target.x = 0.63 + Math.random() * 0.15;
+                target.y = 0.25 + Math.random() * 0.15;
+                target.hand = 'right';
+            } else {
+                target.x = 0.63 + Math.random() * 0.15;
+                target.y = 0.55 + Math.random() * 0.15;
+                target.hand = 'right';
+            }
+        }
+
+        function checkPunch(hand, wristNorm, shoulderNorm, elbowNorm, wristZ, shoulderZ) {
+            if (!target.active || punchCooldown > 0) return {hit: false};
+            
+            const prevSm = smoothedWrists[hand];
+            const smoothFactor = 0.5;
+            const smWrist = {
+                x: prevSm.x * (1 - smoothFactor) + wristNorm.x * smoothFactor,
+                y: prevSm.y * (1 - smoothFactor) + wristNorm.y * smoothFactor
+            };
+            smoothedWrists[hand] = smWrist;
+            
+            const dx = smWrist.x - prevSm.x;
+            const dy = smWrist.y - prevSm.y;
+            const speed = Math.sqrt(dx*dx + dy*dy);
+            const hasActivelyMoved = (speed > 0.018);
+            
+            let hasElbowExtension = false;
+            if (wristNorm && elbowNorm && shoulderNorm) {
+                const upperArmLen = Math.sqrt(Math.pow(shoulderNorm.x - elbowNorm.x, 2) + Math.pow(shoulderNorm.y - elbowNorm.y, 2));
+                const foreArmLen = Math.sqrt(Math.pow(elbowNorm.x - wristNorm.x, 2) + Math.pow(elbowNorm.y - wristNorm.y, 2));
+                const totalReach = Math.sqrt(Math.pow(shoulderNorm.x - wristNorm.x, 2) + Math.pow(shoulderNorm.y - wristNorm.y, 2));
+                if (totalReach > (upperArmLen + foreArmLen) * 0.65) {
+                    hasElbowExtension = true;
+                }
+            }
+            
+            const distToTarget = Math.sqrt(Math.pow(smWrist.x - target.x, 2) + Math.pow(smWrist.y - target.y, 2));
+            const inRadialZone = (distToTarget < 0.28);
+            
+            const isHit = inRadialZone && (hasActivelyMoved || hasElbowExtension || forgivingMode);
+            
+            if (isHit) {
+                const isCorrect = forgivingMode ? true : (hand === target.hand);
+                punchCooldown = COOLDOWN_FRAMES;
+                return {hit: true, isCorrect: isCorrect};
+            }
+            return {hit: false};
+        }
+
+        // MediaPipe Pose Setup
+        let pose = null;
+        try {
+            if (window.Pose) {
+                pose = new Pose({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
+                });
+                pose.setOptions({
+                    modelComplexity: 0,
+                    smoothLandmarks: true,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+                
+                const POSE = { L_SHLD: 11, R_SHLD: 12, L_ELB: 13, R_ELB: 14, L_WRST: 15, R_WRST: 16 };
+                pose.onResults((results) => {
+                    let currentWristsNorm = { left: null, right: null };
+                    let rawLandmarks = null;
+                    
+                    if (results.poseLandmarks) {
+                        rawLandmarks = results.poseLandmarks;
+                        const lShoulder = rawLandmarks[POSE.L_SHLD];
+                        const rShoulder = rawLandmarks[POSE.R_SHLD];
+                        const lElbow = rawLandmarks[POSE.L_ELB];
+                        const rElbow = rawLandmarks[POSE.R_ELB];
+                        const lWrist = rawLandmarks[POSE.L_WRST];
+                        const rWrist = rawLandmarks[POSE.R_WRST];
+                        
+                        const processWrist = (handStr, wrist, elbow, shoulder) => {
+                            if (wrist && elbow && shoulder && wrist.visibility > 0.5) {
+                                const rawNorm = {x: 1 - wrist.x, y: wrist.y}; 
+                                currentWristsNorm[handStr] = rawNorm;
+                                
+                                const shoulderNorm = {x: 1 - shoulder.x, y: shoulder.y};
+                                const elbowNorm = {x: 1 - elbow.x, y: elbow.y};
+                                
+                                const res = checkPunch(handStr, rawNorm, shoulderNorm, elbowNorm, wrist.z, shoulder.z);
+                                if (res.hit && gameStarted) {
+                                    triggerPunchResult(res.isCorrect, target.hand);
+                                    generateTarget(currentWristsNorm);
+                                }
+                            }
+                        };
+                        
+                        processWrist('left', lWrist, lElbow, lShoulder);
+                        processWrist('right', rWrist, rElbow, rShoulder);
+                    }
+                    
+                    drawGameCanvas({ left: smoothedWrists.left, right: smoothedWrists.right }, results.image, rawLandmarks);
+                });
+            }
+        } catch(e) {
+            console.warn("Pose initialization note:", e);
+        }
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+                    audio: false
+                });
+                videoElement.srcObject = stream;
+                await videoElement.play();
+                cameraActive = true;
+                cameraDot.classList.add('active');
+                cameraStatusLabel.textContent = 'Camera Active';
+            } catch (err) {
+                console.warn("Webcam not accessible, using keyboard/mouse mode:", err);
+                cameraActive = false;
+                cameraDot.classList.remove('active');
+                cameraStatusLabel.textContent = 'Keyboard/Mouse Mode';
+            }
+        }
+
+        async function frameLoop() {
+            if (punchCooldown > 0) punchCooldown--;
+            
+            if (cameraActive && videoElement.readyState >= 2 && pose && !isProcessingPose) {
+                isProcessingPose = true;
+                try {
+                    await pose.send({ image: videoElement });
+                } catch(e) {}
+                isProcessingPose = false;
+            } else if (!cameraActive) {
+                drawGameCanvas({ left: smoothedWrists.left, right: smoothedWrists.right }, null, null);
+            }
+            
+            requestAnimationFrame(frameLoop);
+        }
+
+        function drawGameCanvas(wrists, camImage, landmarks) {
+            gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+            
+            if (camImage) {
+                gameCtx.save();
+                gameCtx.translate(gameCanvas.width, 0);
+                gameCtx.scale(-1, 1);
+                
+                const canvasRatio = gameCanvas.width / gameCanvas.height;
+                const imgRatio = camImage.width / camImage.height;
+                let dw, dh, dx, dy;
+                if (canvasRatio > imgRatio) {
+                    dw = gameCanvas.width;
+                    dh = gameCanvas.width / imgRatio;
+                } else {
+                    dw = gameCanvas.height * imgRatio;
+                    dh = gameCanvas.height;
+                }
+                dx = (gameCanvas.width - dw) / 2;
+                dy = (gameCanvas.height - dh) / 2;
+                
+                gameCtx.drawImage(camImage, dx, dy, dw, dh);
+                
+                if (landmarks && window.drawConnectors) {
+                    gameCtx.save();
+                    gameCtx.translate(dx, dy);
+                    gameCtx.scale(dw, dh);
+                    drawConnectors(gameCtx, landmarks, POSE_CONNECTIONS, {color: '#ffffff', lineWidth: 0.01});
+                    drawLandmarks(gameCtx, landmarks, {color: '#bae6fd', lineWidth: 0.005, radius: 0.015});
+                    gameCtx.restore();
+                }
+                gameCtx.restore();
+                
+                gameCtx.fillStyle = 'rgba(0, 10, 30, 0.2)';
+                gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            } else {
+                gameCtx.fillStyle = '#e0f2fe';
+                gameCtx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+                
+                // Draw background boxing ring lines
+                gameCtx.strokeStyle = 'rgba(186, 230, 253, 0.6)';
+                gameCtx.lineWidth = 4;
+                for (let y = 100; y < gameCanvas.height; y += 120) {
+                    gameCtx.beginPath();
+                    gameCtx.moveTo(0, y);
+                    gameCtx.lineTo(gameCanvas.width, y);
+                    gameCtx.stroke();
+                }
+            }
+            
+            if (target.active && gameStarted) {
+                const tx = target.x * gameCanvas.width;
+                const ty = target.y * gameCanvas.height;
+                const color = target.hand === 'left' ? '#84cc16' : '#0ea5e9'; 
+                
+                target.pulse = Math.sin(Date.now() / 150) * 8;
+                let tr = target.radius + target.pulse;
+                
+                gameCtx.beginPath();
+                gameCtx.arc(tx, ty, tr + 15, 0, Math.PI * 2);
+                gameCtx.strokeStyle = color;
+                gameCtx.lineWidth = 6;
+                gameCtx.stroke();
+                
+                gameCtx.beginPath();
+                gameCtx.arc(tx, ty, tr, 0, Math.PI * 2);
+                gameCtx.fillStyle = color;
+                gameCtx.fill();
+                
+                gameCtx.beginPath();
+                gameCtx.arc(tx, ty, tr - 30, 0, Math.PI * 2);
+                gameCtx.strokeStyle = '#fff';
+                gameCtx.lineWidth = 4;
+                gameCtx.stroke();
+                
+                gameCtx.fillStyle = '#fff';
+                gameCtx.font = 'bold 50px "Arial Rounded MT Bold"';
+                gameCtx.textAlign = 'center';
+                gameCtx.textBaseline = 'middle';
+                gameCtx.fillText(target.hand === 'left' ? 'L' : 'R', tx, ty + 2);
+            }
+            
+            if (hitEffect.active) {
+                const elapsed = Date.now() - hitEffect.time;
+                if (elapsed < 350) {
+                    const radius = hitEffect.radius + (elapsed * 2.0);
+                    const alpha = 1 - (elapsed / 350);
+                    gameCtx.beginPath();
+                    gameCtx.arc(hitEffect.x, hitEffect.y, radius, 0, Math.PI * 2);
+                    
+                    gameCtx.strokeStyle = `rgba(${hitEffect.rgb}, ${alpha})`;
+                    gameCtx.lineWidth = 15;
+                    gameCtx.stroke();
+                } else {
+                    hitEffect.active = false;
+                }
+            }
+            
+            ['left', 'right'].forEach(hand => {
+                const smWrist = wrists[hand];
+                if (smWrist) {
+                    const wx = smWrist.x * gameCanvas.width;
+                    const wy = smWrist.y * gameCanvas.height;
+                    const c = hand === 'left' ? '#84cc16' : '#0ea5e9';
+                    
+                    gameCtx.beginPath();
+                    gameCtx.arc(wx, wy, 45, 0, Math.PI*2);
+                    gameCtx.fillStyle = c;
+                    gameCtx.fill();
+                    
+                    gameCtx.beginPath();
+                    gameCtx.arc(wx, wy, 45, 0, Math.PI*2);
+                    gameCtx.strokeStyle = '#fff';
+                    gameCtx.lineWidth = 6;
+                    gameCtx.stroke();
+                    
+                    gameCtx.fillStyle = '#fff';
+                    gameCtx.font = 'bold 32px "Arial Rounded MT Bold"';
+                    gameCtx.textAlign = 'center';
+                    gameCtx.textBaseline = 'middle';
+                    gameCtx.fillText(hand === 'left' ? 'L' : 'R', wx, wy + 2);
+                }
+            });
+        }
+
+        function playHitSound(isLeft, comboCount) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const baseFreq = isLeft ? 220 : 280;
+                const freq = baseFreq + Math.min(comboCount * 25, 400);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                osc.connect(gain).connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.13);
+            } catch(e) {}
+        }
+
+        function triggerPunchResult(isCorrect, hand) {
+            totalPunches++;
+            hitEffect.active = true;
+            hitEffect.x = target.x * gameCanvas.width;
+            hitEffect.y = target.y * gameCanvas.height;
+            hitEffect.radius = target.radius;
+            hitEffect.time = Date.now();
+
+            if (isCorrect) {
+                correctPunches++;
+                combo++;
+                let points = 10 + Math.min(Math.floor(combo/2), 6) * 2;
+                score += points;
+                hitEffect.color = (target.hand === 'left') ? '#84cc16' : '#0ea5e9';
+                hitEffect.rgb = (target.hand === 'left') ? '132,204,22' : '14,165,233';
+                showMessage(`+${points} PTS! (${combo}x)`, hitEffect.color);
+                playHitSound(target.hand === 'left', combo);
+            } else {
+                combo = 0;
+                score = Math.max(0, score - 3);
+                hitEffect.color = '#ef4444';
+                hitEffect.rgb = '239,68,68';
+                showMessage(`Use ${target.hand.toUpperCase()} hand!`, '#ef4444');
+            }
+            updateUI();
+        }
+
+        function triggerManualPunch(hand) {
+            if (!gameStarted || !target.active || punchCooldown > 0) return;
+            punchCooldown = 8;
+            const isCorrect = forgivingMode ? true : (hand === target.hand);
+            triggerPunchResult(isCorrect, hand);
+            generateTarget();
+        }
+
+        gameCanvas.addEventListener('pointerdown', (e) => {
+            if (!gameStarted || !target.active) return;
+            const normX = e.clientX / gameCanvas.width;
+            const normY = e.clientY / gameCanvas.height;
+            const dist = Math.sqrt(Math.pow(normX - target.x, 2) + Math.pow(normY - target.y, 2));
+            if (dist < 0.3) {
+                triggerManualPunch(target.hand);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
+                triggerManualPunch('left');
+            } else if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') {
+                triggerManualPunch('right');
+            }
+        });
+
+        startBtn.addEventListener('click', () => {
+            if (!gameStarted) {
+                gameStarted = true;
+                startBtn.textContent = '⏹ Stop Game';
+                score = 0; combo = 0; totalPunches = 0; correctPunches = 0;
+                updateUI();
+                generateTarget();
+            } else {
+                gameStarted = false;
+                target.active = false;
+                startBtn.textContent = '▶ Start Game';
+                if (totalPunches > 0) {
+                    const acc = Math.round((correctPunches / totalPunches) * 100);
+                    window.parent.postMessage({
+                        type: 'EXERGAME_SCORE',
+                        exercise: 'Wii Sports Boxing',
+                        score: score,
+                        speed: totalPunches,
+                        consistency: acc
+                    }, '*');
+                }
+            }
+        });
+        
+        modeBtn.addEventListener('click', () => {
+            forgivingMode = !forgivingMode;
+            modeBtn.textContent = forgivingMode ? "⚙ Mode: Gentle" : "⚙ Mode: Standard";
+            showMessage(`Mode: ${forgivingMode ? 'Gentle' : 'Standard'}`, '#eab308');
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            score = 0; combo = 0; totalPunches = 0; correctPunches = 0;
+            updateUI();
+            if (gameStarted) generateTarget();
+        });
+
+        updateUI();
+        initCamera();
+        frameLoop();
+    </script>
+</body>
+</html>
