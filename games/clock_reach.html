@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSVT BIG Clock Reach &amp; Dynamic Weight Shift - Parkinson's Exergame</title>
+    <!-- MediaPipe Pose -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html {
+            width: 100%; height: 100%; overflow: hidden;
+            background: #090d16;
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            color: #f8fafc;
+            user-select: none;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 1;
+            display: block;
+        }
+
+        #webcamVideo {
+            display: none;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(14px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 10px 22px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stat-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+        .stat-val {
+            font-size: 26px;
+            font-weight: 900;
+            color: #f43f5e;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .combo-badge {
+            font-size: 17px;
+            font-weight: 900;
+            padding: 4px 14px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #f43f5e, #f59e0b);
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.6);
+            transition: transform 0.15s ease;
+        }
+        .combo-badge.frenzy {
+            background: linear-gradient(135deg, #facc15, #f97316);
+            animation: pulse-frenzy 0.3s infinite alternate;
+        }
+        @keyframes pulse-frenzy {
+            from { transform: scale(1); }
+            to { transform: scale(1.15); box-shadow: 0 0 30px #facc15; }
+        }
+
+        .level-badge {
+            font-size: 13px;
+            font-weight: 800;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.15);
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .btn {
+            background: #f43f5e;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 15px;
+            border: none;
+            border-radius: 999px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover { background: #fb7185; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244, 63, 94, 0.6); }
+        .btn:active { transform: translateY(0); }
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.12);
+            color: #f8fafc;
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
+            box-shadow: none;
+        }
+        .btn.secondary:hover { background: rgba(255, 255, 255, 0.22); }
+
+        .center-hud {
+            position: absolute;
+            left: 50%;
+            top: 14%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 15;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 12px 28px;
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+        }
+        .prompt-instruction {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #fb7185;
+            text-transform: uppercase;
+        }
+        .prompt-main {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: #f8fafc;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            margin: 2px 0;
+        }
+        .prompt-sub {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        /* Live Amplitude Gauge */
+        .amplitude-container {
+            margin-top: 6px;
+            width: 240px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+        }
+        .amplitude-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #38bdf8 0%, #facc15 65%, #f43f5e 100%);
+            border-radius: 999px;
+            transition: width 0.08s ease;
+        }
+
+        .camera-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-top: 4px;
+        }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #eab308;
+        }
+        .status-dot.active { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+
+        /* Accessible Click/Touch Clock Nodes Overlay */
+        .clock-nodes-wrapper {
+            position: absolute;
+            left: 50%;
+            top: 55%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            pointer-events: auto;
+            z-index: 12;
+        }
+
+        .clock-node {
+            position: absolute;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.85);
+            border: 3px solid rgba(255, 255, 255, 0.35);
+            color: #f8fafc;
+            font-size: 20px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+        }
+        .clock-node:hover {
+            transform: scale(1.18);
+            border-color: #f43f5e;
+            box-shadow: 0 0 25px rgba(244, 63, 94, 0.9);
+        }
+        .clock-node.active-target {
+            border-color: #facc15;
+            background: #f43f5e;
+            color: #ffffff;
+            box-shadow: 0 0 35px #f43f5e;
+            animation: pulse-clock-node 0.45s ease-in-out infinite alternate;
+        }
+        @keyframes pulse-clock-node {
+            from { transform: scale(1.1); }
+            to { transform: scale(1.3); }
+        }
+
+        /* Settings Drawer Modal */
+        .settings-modal {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(16px);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+        .settings-modal.hidden { display: none; }
+        .settings-card {
+            background: #0f172a;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 28px;
+            padding: 28px 32px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .settings-card h3 {
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #f8fafc;
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .setting-label {
+            font-weight: 700;
+            font-size: 15px;
+            color: #e2e8f0;
+        }
+        .setting-sub {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .toggle-switch {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
+            font-weight: 700;
+            font-size: 13px;
+            color: #f8fafc;
+            transition: all 0.2s;
+        }
+        .toggle-switch.active {
+            background: #38bdf8;
+            color: #0f172a;
+            border-color: #38bdf8;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <video id="webcamVideo" autoplay playsinline muted></video>
+
+    <div class="overlay">
+        <!-- Top HUD -->
+        <div class="hud-top">
+            <div class="glass-panel">
+                <div class="stat-item">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-val" id="valScore">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Big Hits</span>
+                    <span class="stat-val" id="valHits" style="color:#22c55e;">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Avg Amplitude</span>
+                    <span class="stat-val" id="valAmplitude" style="color:#facc15;">0%</span>
+                </div>
+                <div class="combo-badge" id="comboBadge">1x COMBO</div>
+                <div class="level-badge" id="levelBadge">Lv. 1 Rookie</div>
+            </div>
+
+            <div class="glass-panel" style="gap:10px;">
+                <button class="btn" id="btnStart">▶ Start Session</button>
+                <button class="btn secondary" id="btnMode">⚙ Mode: Big Reach</button>
+                <button class="btn secondary" id="btnOpenSettings" title="Game Settings">⚙️ Settings</button>
+            </div>
+        </div>
+
+        <!-- Center Arena HUD -->
+        <div class="center-hud">
+            <div class="prompt-instruction" id="promptInstruction">LSVT BIG · TORSO &amp; ARM TRACKING</div>
+            <div class="prompt-main" id="promptMain">REACH 12 O'CLOCK!</div>
+            <div class="prompt-sub" id="promptSub">Extend your arm with huge amplitude toward the target</div>
+            <div style="display:flex;justify-content:center;align-items:center;margin-top:6px;gap:8px;">
+                <span style="font-size:11px;font-weight:700;color:#94a3b8;">AMPLITUDE:</span>
+                <div class="amplitude-container"><div class="amplitude-fill" id="ampFill"></div></div>
+            </div>
+            <div class="camera-status-pill">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Starting Camera &amp; Pose Tracker...</span>
+            </div>
+        </div>
+
+        <!-- Touch / Clickable Clock Nodes Overlay -->
+        <div class="clock-nodes-wrapper" id="clockNodesWrapper"></div>
+    </div>
+
+    <!-- In-Game Settings Modal -->
+    <div class="settings-modal hidden" id="settingsModal">
+        <div class="settings-card">
+            <h3>
+                <span>⚙️ Game &amp; Camera Settings</span>
+                <button type="button" class="btn secondary" id="btnCloseSettings" style="padding: 6px 14px; font-size: 13px;">✕ Close</button>
+            </h3>
+
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">📹 Live Camera Background</div>
+                    <div class="setting-sub">Display live mirrored webcam as backdrop</div>
+                </div>
+                <button type="button" class="toggle-switch active" id="toggleCameraBg">ON</button>
+            </div>
+
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">🦴 Skeletal Tracking Overlay</div>
+                    <div class="setting-sub">Show torso beams &amp; hand glow points</div>
+                </div>
+                <button type="button" class="toggle-switch active" id="toggleSkeleton">ON</button>
+            </div>
+
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">🔊 Harmonic Chimes &amp; Audio</div>
+                    <div class="setting-sub">Play major harmonic notes on successful reach</div>
+                </div>
+                <button type="button" class="toggle-switch active" id="toggleAudio">ON</button>
+            </div>
+
+            <div class="setting-row">
+                <div>
+                    <div class="setting-label">🎯 Posture Auto-Calibration</div>
+                    <div class="setting-sub">Re-center torso anchor for sitting or standing</div>
+                </div>
+                <button type="button" class="btn secondary" id="btnRecalibrate" style="padding: 6px 14px; font-size: 12px;">Re-Calibrate</button>
+            </div>
+
+            <button type="button" class="btn" id="btnDoneSettings" style="justify-content: center; width: 100%; margin-top: 6px;">Done</button>
+        </div>
+    </div>
+
+    <script>
+        // -------------------------------------------------------------
+        // Game Settings State
+        // -------------------------------------------------------------
+        const settings = {
+            cameraBg: true,
+            skeleton: true,
+            audio: true
+        };
+
+        // Web Audio Synthesizer
+        let audioCtx = null;
+        function ensureAudio() {
+            if (!settings.audio) return;
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        const HOUR_NOTES = {
+            1: 261.63, 2: 293.66, 3: 329.63, 4: 349.23,
+            5: 392.00, 6: 440.00, 7: 493.88, 8: 523.25,
+            9: 587.33, 10: 659.25, 11: 698.46, 12: 783.99
+        };
+
+        function playHarmonicTone(freq, type, duration, gainVal = 0.25) {
+            if (!settings.audio) return;
+            try {
+                ensureAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function playHitChime(hour, isMaxBig = false) {
+            const baseFreq = HOUR_NOTES[hour] || 440;
+            playHarmonicTone(baseFreq, 'sine', 0.25, 0.35);
+            playHarmonicTone(baseFreq * 1.5, 'triangle', 0.2, 0.2);
+            if (isMaxBig) {
+                setTimeout(() => playHarmonicTone(baseFreq * 2, 'sine', 0.3, 0.4), 60);
+            }
+        }
+        function playErrorSound() {
+            playHarmonicTone(160, 'sawtooth', 0.15, 0.2);
+        }
+
+        // Particle FX & Floating Texts
+        const particles = [];
+        const floatingTexts = [];
+
+        function spawnParticles(x, y, color = '#f43f5e', count = 35) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 3;
+                particles.push({
+                    x: x, y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: Math.random() * 5 + 2,
+                    color: color,
+                    alpha: 1.0,
+                    decay: Math.random() * 0.03 + 0.02
+                });
+            }
+        }
+
+        function spawnFloatingText(x, y, text, color = '#facc15') {
+            floatingTexts.push({
+                x: x, y: y,
+                text: text,
+                color: color,
+                alpha: 1.0,
+                vy: -2.5
+            });
+        }
+
+        // Game State & Scoring
+        let isRunning = false;
+        let score = 0;
+        let totalHits = 0;
+        let sumAmplitude = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let level = 1;
+        let currentTargetHour = 12;
+        let modeIndex = 0;
+        const MODES = [
+            { name: "Big Reach", desc: "Reach maximum amplitude toward called clock hour" },
+            { name: "Weight Shift", desc: "Dynamic lateral torso sway (sitting or standing)" }
+        ];
+
+        const LEVEL_TITLES = [
+            "Lv. 1 Rookie",
+            "Lv. 2 Stretcher",
+            "Lv. 3 Amplitude Ace",
+            "Lv. 4 LSVT Champion",
+            "Lv. 5 Grandmaster of BIG"
+        ];
+
+        const valScore = document.getElementById('valScore');
+        const valHits = document.getElementById('valHits');
+        const valAmplitude = document.getElementById('valAmplitude');
+        const comboBadge = document.getElementById('comboBadge');
+        const levelBadge = document.getElementById('levelBadge');
+        const btnStart = document.getElementById('btnStart');
+        const btnMode = document.getElementById('btnMode');
+        const btnOpenSettings = document.getElementById('btnOpenSettings');
+        const btnCloseSettings = document.getElementById('btnCloseSettings');
+        const btnDoneSettings = document.getElementById('btnDoneSettings');
+        const settingsModal = document.getElementById('settingsModal');
+        const toggleCameraBg = document.getElementById('toggleCameraBg');
+        const toggleSkeleton = document.getElementById('toggleSkeleton');
+        const toggleAudio = document.getElementById('toggleAudio');
+        const btnRecalibrate = document.getElementById('btnRecalibrate');
+        const promptInstruction = document.getElementById('promptInstruction');
+        const promptMain = document.getElementById('promptMain');
+        const promptSub = document.getElementById('promptSub');
+        const ampFill = document.getElementById('ampFill');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const clockNodesWrapper = document.getElementById('clockNodesWrapper');
+
+        const nodes = {};
+
+        function buildClockNodes() {
+            clockNodesWrapper.innerHTML = '';
+            const cx = 250, cy = 250, r = 210;
+            for (let hour = 1; hour <= 12; hour++) {
+                const angle = (hour * 30 - 90) * (Math.PI / 180);
+                const x = cx + r * Math.cos(angle) - 29;
+                const y = cy + r * Math.sin(angle) - 29;
+
+                const node = document.createElement('button');
+                node.className = 'clock-node';
+                node.style.left = `${x}px`;
+                node.style.top = `${y}px`;
+                node.textContent = hour;
+                node.dataset.hour = hour;
+                node.setAttribute('aria-label', `Reach ${hour} o'clock`);
+                node.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    handleManualHit(hour);
+                });
+                clockNodesWrapper.appendChild(node);
+                nodes[hour] = node;
+            }
+        }
+        buildClockNodes();
+
+        function updateUI() {
+            valScore.textContent = score;
+            valHits.textContent = totalHits;
+            const avgAmp = totalHits > 0 ? Math.round(sumAmplitude / totalHits) : 0;
+            valAmplitude.textContent = `${avgAmp}%`;
+            btnMode.textContent = `⚙ Mode: ${MODES[modeIndex].name}`;
+
+            if (combo >= 2) {
+                const multiplier = Math.min(Math.floor(combo / 2) + 1, 5);
+                comboBadge.textContent = `${multiplier}x COMBO! 🔥`;
+                comboBadge.classList.toggle('frenzy', multiplier >= 4);
+                comboBadge.style.display = 'inline-block';
+            } else {
+                comboBadge.textContent = '1x COMBO';
+                comboBadge.classList.remove('frenzy');
+            }
+
+            level = Math.min(Math.floor(totalHits / 5) + 1, 5);
+            levelBadge.textContent = LEVEL_TITLES[level - 1] || "Lv. 5 Grandmaster";
+        }
+
+        function triggerNewTarget() {
+            Object.values(nodes).forEach(n => n.classList.remove('active-target'));
+            let nextHour = Math.floor(Math.random() * 12) + 1;
+            if (modeIndex === 1) {
+                const swayTargets = [3, 9, 12, 6];
+                const available = swayTargets.filter(h => h !== currentTargetHour);
+                nextHour = available[Math.floor(Math.random() * available.length)];
+            }
+            currentTargetHour = nextHour;
+            nodes[currentTargetHour]?.classList.add('active-target');
+
+            if (modeIndex === 0) {
+                promptInstruction.textContent = "LSVT BIG · TORSO & ARM REACH";
+                promptMain.textContent = `REACH ${currentTargetHour} O'CLOCK!`;
+                promptSub.textContent = "Extend your arm with huge amplitude toward the target!";
+            } else {
+                promptInstruction.textContent = "DYNAMIC WEIGHT SHIFT (SEATED/STANDING)";
+                const swayNames = { 3: "SWAY RIGHT (3 O'CLOCK)", 9: "SWAY LEFT (9 O'CLOCK)", 12: "LEAN FORWARD (12 O'CLOCK)", 6: "LEAN BACK (6 O'CLOCK)" };
+                promptMain.textContent = swayNames[currentTargetHour] || `SHIFT WEIGHT TO ${currentTargetHour}`;
+                promptSub.textContent = "Shift your torso firmly in that direction";
+            }
+            ampFill.style.width = '15%';
+        }
+
+        let hitCooldown = 0;
+
+        function recordSuccessfulHit(ampScore, hitX, hitY) {
+            if (hitCooldown > 0) return;
+            hitCooldown = 35;
+            totalHits++;
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+            sumAmplitude += ampScore;
+
+            const multiplier = Math.min(Math.floor(combo / 2) + 1, 5);
+            const isMaxBig = ampScore >= 95;
+            const points = (100 + Math.round(ampScore) * 2) * multiplier;
+            score += points;
+
+            playHitChime(currentTargetHour, isMaxBig);
+            spawnParticles(hitX || window.innerWidth / 2, hitY || window.innerHeight / 2, isMaxBig ? '#facc15' : '#f43f5e', 45);
+            
+            const feedbackText = isMaxBig ? `+${points} HUGE LSVT!` : `+${points} BIG!`;
+            spawnFloatingText(hitX || window.innerWidth / 2, (hitY || window.innerHeight / 2) - 30, feedbackText, isMaxBig ? '#facc15' : '#38bdf8');
+
+            ampFill.style.width = `${Math.min(ampScore, 100)}%`;
+            updateUI();
+            setTimeout(triggerNewTarget, 300);
+        }
+
+        function handleManualHit(hour) {
+            if (!isRunning) return;
+            ensureAudio();
+            if (hour === currentTargetHour) {
+                const ampScore = Math.min(85 + Math.floor(Math.random() * 25), 110);
+                recordSuccessfulHit(ampScore, window.innerWidth / 2, window.innerHeight / 2);
+            } else {
+                combo = 0;
+                playErrorSound();
+                updateUI();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!isRunning) return;
+            const k = e.key;
+            if (k >= '1' && k <= '9') handleManualHit(Number(k));
+            else if (k === '0') handleManualHit(10);
+            else if (k === '-') handleManualHit(11);
+            else if (k === '=') handleManualHit(12);
+            else if (k === 'ArrowUp') handleManualHit(12);
+            else if (k === 'ArrowRight') handleManualHit(3);
+            else if (k === 'ArrowDown') handleManualHit(6);
+            else if (k === 'ArrowLeft') handleManualHit(9);
+            else if (k === ' ' && !isRunning) startSession();
+        });
+
+        function startSession() {
+            ensureAudio();
+            isRunning = true;
+            score = 0;
+            totalHits = 0;
+            sumAmplitude = 0;
+            combo = 0;
+            hitCooldown = 0;
+            btnStart.textContent = "⏹ Stop Session";
+            updateUI();
+            triggerNewTarget();
+        }
+
+        function stopSession() {
+            isRunning = false;
+            btnStart.textContent = "▶ Start Session";
+            Object.values(nodes).forEach(n => n.classList.remove('active-target'));
+            const avgAmp = totalHits > 0 ? Math.round(sumAmplitude / totalHits) : 0;
+            promptInstruction.textContent = "BIG SESSION COMPLETE";
+            promptMain.textContent = `FINAL SCORE: ${score}`;
+            promptSub.textContent = `Completed ${totalHits} Big Hits · Max Combo: ${maxCombo}x · Avg Amp: ${avgAmp}%`;
+
+            if (totalHits > 0) {
+                window.parent.postMessage({
+                    type: 'EXERGAME_SCORE',
+                    exercise: 'LSVT Clock Reach',
+                    score: score,
+                    speed: totalHits,
+                    consistency: avgAmp
+                }, '*');
+            }
+        }
+
+        btnStart.addEventListener('click', () => {
+            if (isRunning) stopSession();
+            else startSession();
+        });
+
+        btnMode.addEventListener('click', () => {
+            modeIndex = (modeIndex + 1) % MODES.length;
+            updateUI();
+            if (isRunning) triggerNewTarget();
+        });
+
+        // Settings Dialog Listeners
+        btnOpenSettings.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        btnCloseSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        btnDoneSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+        toggleCameraBg.addEventListener('click', () => {
+            settings.cameraBg = !settings.cameraBg;
+            toggleCameraBg.textContent = settings.cameraBg ? "ON" : "OFF";
+            toggleCameraBg.classList.toggle('active', settings.cameraBg);
+        });
+
+        toggleSkeleton.addEventListener('click', () => {
+            settings.skeleton = !settings.skeleton;
+            toggleSkeleton.textContent = settings.skeleton ? "ON" : "OFF";
+            toggleSkeleton.classList.toggle('active', settings.skeleton);
+        });
+
+        toggleAudio.addEventListener('click', () => {
+            settings.audio = !settings.audio;
+            toggleAudio.textContent = settings.audio ? "ON" : "OFF";
+            toggleAudio.classList.toggle('active', settings.audio);
+        });
+
+        btnRecalibrate.addEventListener('click', () => {
+            isCalibrated = false;
+            btnRecalibrate.textContent = "Calibrated! ✓";
+            setTimeout(() => { btnRecalibrate.textContent = "Re-Calibrate"; }, 1500);
+        });
+
+        // -------------------------------------------------------------
+        // MediaPipe Pose & Camera Direct Stream Engine
+        // -------------------------------------------------------------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const videoElement = document.getElementById('webcamVideo');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let pose = null;
+        let isCameraActive = false;
+        let isProcessingPose = false;
+        let latestPoseLandmarks = null;
+        let baselineTorsoX = 0.5;
+        let baselineTorsoY = 0.5;
+        let isCalibrated = false;
+
+        async function initCameraAndPose() {
+            try {
+                if (window.Pose) {
+                    pose = new Pose({
+                        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
+                    });
+                    pose.setOptions({
+                        modelComplexity: 1,
+                        smoothLandmarks: true,
+                        enableSegmentation: false,
+                        minDetectionConfidence: 0.5,
+                        minTrackingConfidence: 0.5
+                    });
+                    pose.onResults((results) => {
+                        latestPoseLandmarks = results.poseLandmarks;
+                    });
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+                    audio: false
+                });
+                videoElement.srcObject = stream;
+                await videoElement.play();
+
+                isCameraActive = true;
+                statusDot.classList.add('active');
+                statusText.textContent = "Live Camera Active";
+            } catch (err) {
+                console.warn("Camera init note (Touch & keyboard active):", err);
+                statusDot.classList.remove('active');
+                statusText.textContent = "Touch & Keyboard Mode Active";
+            }
+        }
+
+        async function frameLoop() {
+            if (hitCooldown > 0) hitCooldown--;
+
+            if (isCameraActive && videoElement.readyState >= 2 && pose && !isProcessingPose) {
+                isProcessingPose = true;
+                try {
+                    await pose.send({ image: videoElement });
+                } catch(e) {}
+                isProcessingPose = false;
+            }
+
+            renderGameScene();
+            requestAnimationFrame(frameLoop);
+        }
+
+        function renderGameScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Compute aspect-ratio cover dimensions for camera background
+            const vw = videoElement.videoWidth || 1280;
+            const vh = videoElement.videoHeight || 720;
+            const canvasRatio = canvas.width / canvas.height;
+            const videoRatio = vw / vh;
+            let dw, dh, dx, dy;
+            if (canvasRatio > videoRatio) {
+                dw = canvas.width;
+                dh = canvas.width / videoRatio;
+            } else {
+                dh = canvas.height;
+                dw = canvas.height * videoRatio;
+            }
+            dx = (canvas.width - dw) / 2;
+            dy = (canvas.height - dh) / 2;
+
+            // 1. Draw Full-Bleed Mirrored Camera Output as Background
+            if (isCameraActive && videoElement.videoWidth > 0 && settings.cameraBg) {
+                ctx.save();
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(videoElement, dx, dy, dw, dh);
+                ctx.restore();
+
+                // Subtle edge softening vignette
+                const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.width*0.35, canvas.width/2, canvas.height/2, canvas.width*0.75);
+                grad.addColorStop(0, 'rgba(9, 13, 22, 0.05)');
+                grad.addColorStop(1, 'rgba(9, 13, 22, 0.55)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = '#090d16';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // 2. Process MediaPipe Pose Landmarks with exact screen mapping
+            if (latestPoseLandmarks && latestPoseLandmarks.length > 0) {
+                const landmarks = latestPoseLandmarks;
+                const lShoulder = landmarks[11];
+                const rShoulder = landmarks[12];
+                const lWrist = landmarks[15];
+                const rWrist = landmarks[16];
+
+                // Screen mapping that matches the mirrored cover video
+                const toScreen = (lm) => ({
+                    x: canvas.width - (dx + lm.x * dw),
+                    y: dy + lm.y * dh
+                });
+
+                const sL = toScreen(lShoulder);
+                const sR = toScreen(rShoulder);
+                const wL = toScreen(lWrist);
+                const wR = toScreen(rWrist);
+
+                const torsoX = (sL.x + sR.x) / 2;
+                const torsoY = (sL.y + sR.y) / 2 + 25;
+                const shoulderSpan = Math.hypot(sL.x - sR.x, sL.y - sR.y);
+                const armSpanRef = Math.max(shoulderSpan * 1.85, 160);
+
+                if (!isCalibrated) {
+                    baselineTorsoX = torsoX;
+                    baselineTorsoY = torsoY;
+                    isCalibrated = true;
+                }
+
+                // Draw AR Halo Clock Ring around Torso
+                ctx.save();
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.5)';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([8, 8]);
+                ctx.beginPath();
+                ctx.arc(torsoX, torsoY, armSpanRef, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.restore();
+
+                // Draw Skeleton Beams
+                if (settings.skeleton) {
+                    ctx.save();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 6;
+                    ctx.shadowColor = '#0284c7';
+                    ctx.shadowBlur = 12;
+                    ctx.beginPath();
+                    ctx.moveTo(sL.x, sL.y); ctx.lineTo(sR.x, sR.y);
+                    ctx.moveTo(sL.x, sL.y); ctx.lineTo(wL.x, wL.y);
+                    ctx.moveTo(sR.x, sR.y); ctx.lineTo(wR.x, wR.y);
+                    ctx.stroke();
+
+                    // Hand Glow Points
+                    [wL, wR].forEach(pt => {
+                        ctx.fillStyle = '#f43f5e';
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, 16, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    });
+                    ctx.restore();
+                }
+
+                // Target Hour Position
+                const targetAngleRad = (currentTargetHour * 30 - 90) * (Math.PI / 180);
+                const targetX = torsoX + armSpanRef * Math.cos(targetAngleRad);
+                const targetY = torsoY + armSpanRef * Math.sin(targetAngleRad);
+
+                // Draw Glowing Target Disk
+                ctx.save();
+                ctx.fillStyle = 'rgba(244, 63, 94, 0.55)';
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, 36, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 5;
+                ctx.shadowColor = '#facc15';
+                ctx.shadowBlur = 20;
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 24px Segoe UI, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(currentTargetHour.toString(), targetX, targetY);
+                ctx.restore();
+
+                // Gameplay Trigger Logic
+                if (isRunning) {
+                    if (modeIndex === 0) {
+                        // MODE 0: BIG REACH
+                        const distL = Math.hypot(wL.x - torsoX, wL.y - torsoY);
+                        const distR = Math.hypot(wR.x - torsoX, wR.y - torsoY);
+                        const maxDist = Math.max(distL, distR);
+                        const activeHand = (distL > distR) ? wL : wR;
+
+                        const reachAngle = Math.atan2(activeHand.y - torsoY, activeHand.x - torsoX);
+                        let angleDiff = Math.abs(reachAngle - targetAngleRad);
+                        while (angleDiff > Math.PI) angleDiff = Math.abs(angleDiff - 2 * Math.PI);
+
+                        const currentAmpPct = Math.min((maxDist / armSpanRef) * 100, 120);
+                        ampFill.style.width = `${Math.min(currentAmpPct, 100)}%`;
+
+                        if (angleDiff < 0.48 && currentAmpPct >= 70) {
+                            recordSuccessfulHit(currentAmpPct, targetX, targetY);
+                        }
+                    } else {
+                        // MODE 1: DYNAMIC WEIGHT SHIFT
+                        const shiftX = (torsoX - baselineTorsoX);
+                        const shiftY = (torsoY - baselineTorsoY);
+                        const shiftDist = Math.hypot(shiftX, shiftY);
+                        const shiftAmpPct = Math.min((shiftDist / (shoulderSpan * 0.65)) * 100, 120);
+                        ampFill.style.width = `${Math.min(shiftAmpPct, 100)}%`;
+
+                        let matched = false;
+                        if (currentTargetHour === 3 && shiftX > 28) matched = true;
+                        else if (currentTargetHour === 9 && shiftX < -28) matched = true;
+                        else if (currentTargetHour === 12 && shiftY < -20) matched = true;
+                        else if (currentTargetHour === 6 && shiftY > 20) matched = true;
+
+                        if (matched && shiftAmpPct >= 60) {
+                            recordSuccessfulHit(shiftAmpPct, targetX, targetY);
+                        }
+                    }
+                }
+            }
+
+            // Render Particle Sparks
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= p.decay;
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Render Floating Text Scores
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y += ft.vy;
+                ft.alpha -= 0.025;
+                if (ft.alpha <= 0) {
+                    floatingTexts.splice(i, 1);
+                    continue;
+                }
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.fillStyle = ft.color;
+                ctx.font = '900 28px Segoe UI, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 10;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            }
+        }
+
+        initCameraAndPose();
+        frameLoop();
+        updateUI();
+    </script>
+</body>
+</html>

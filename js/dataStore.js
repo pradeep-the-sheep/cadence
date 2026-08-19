@@ -90,8 +90,11 @@ window.Cadence = window.Cadence || {};
     localStorage.setItem(CONSENT_KEY, JSON.stringify({
       agreed,
       timestamp: new Date().toISOString(),
-      version: '2.0',
-      notice: 'GDPR-compliant consent for health data processing under Art. 9(2)(a)'
+      version: '3.0',
+      legalBasis: 'Explicit consent (Art. 9(2)(a) and Art. 6(1)(a) UK/EU GDPR)',
+      retentionCriteria: 'Stored solely in local browser localStorage until user deletion or consent withdrawal; 0 days external server retention',
+      thirdPartyProcessors: 'Google Fonts CDN (static font stylesheets/files), MediaPipe/jsDelivr CDN (client-side WebAssembly models running locally on device)',
+      notice: 'GDPR-compliant explicit consent for special category health data processing under Art. 9(2)(a)'
     }));
   }
 

@@ -38,6 +38,9 @@
         <button type="button" data-size="lg" aria-pressed="false" aria-label="Large text size">A+</button>
         <button type="button" data-size="xl" aria-pressed="false" aria-label="Extra large text size">A++</button>
       </div>
+      <button type="button" class="btn-header-settings" id="btnHeaderSettings" aria-label="Open Settings" style="background: var(--surface-2); border: 2px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 0.88rem; font-weight: 700; cursor: pointer; color: var(--ink); display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+        <span>⚙️</span> <span>Settings</span>
+      </button>
     </div>
   </header>
 
@@ -47,6 +50,7 @@
     <button type="button" class="main-tab" id="tabAnalytics" role="tab" aria-selected="false" aria-controls="analyticsPanel">📊 Insights</button>
     <button type="button" class="main-tab" id="tabFingerGym" role="tab" aria-selected="false" aria-controls="fingerGymPanel">🏃 Activity</button>
     <button type="button" class="main-tab" id="tabVoiceTherapy" role="tab" aria-selected="false" aria-controls="voiceTherapyPanel">🗣️ Voice Lab</button>
+    <button type="button" class="main-tab" id="tabSettings" role="tab" aria-selected="false" aria-controls="settingsPanel">⚙️ Settings</button>
   </nav>
 
   <!-- Main View Container -->
@@ -141,19 +145,17 @@
               <div class="clock-face" id="clockFace"><div class="center-dot"></div></div>
             </div>
             <div class="clock-orbit-legend" aria-hidden="true">
-              <span>☀️ <strong>Daytime (6 AM – 6 PM):</strong> Inside clock rim</span>
-              <span>🌙 <strong>Night (6 PM – 6 AM):</strong> Outside orbit</span>
+              <span>☀️ <strong>Day (6 AM – 6 PM):</strong> Inside rim</span>
+              <span>🌙 <strong>Night (6 PM – 6 AM):</strong> Outside ring</span>
             </div>
           </div>
 
-          <div class="dose-clock" id="doseClock" style="margin-top:10px;margin-bottom:10px;padding:10px 16px;">
+          <div class="dose-clock" id="doseClock">
             <div class="label" id="doseLabel">⏱️ Next dose in</div>
             <div class="countdown ok" id="doseCountdown">--h --m</div>
             <div class="sub" id="doseSub">No medication scheduled</div>
             <div class="progress-track"><div class="fill ok" id="doseProgress" style="width:0%;"></div></div>
           </div>
-
-          <button class="btn-view-prev" id="viewPrevBtn" aria-label="View all previous entries" style="margin-top:8px;padding:14px 28px;font-size:1.1rem;">📋 View previous entries</button>
         </div>
 
         <div class="card" id="cardQuickLog">
@@ -378,6 +380,83 @@
               </button>
             </div>
           </div>
+
+          <!-- LSVT BIG Clock Reach Game -->
+          <div class="exergame-card reach" id="btnLaunchReach" role="button" tabindex="0" style="border-color: #f43f5e;">
+            <div class="exergame-preview-banner" style="background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);">
+              <span class="exergame-icon-huge">🎯</span>
+              <span class="exergame-badge">MediaPipe Torso &amp; Hand</span>
+            </div>
+            <div class="exergame-body">
+              <div class="exergame-title">
+                <span>LSVT Clock Reach</span>
+              </div>
+              <p class="exergame-desc">
+                MediaPipe landmark tracking for high-amplitude arm reaches and dynamic lateral torso weight shifts. Practice seated or standing!
+              </p>
+              <div class="exergame-tags">
+                <span class="exergame-tag">🙌 BIG Reaches</span>
+                <span class="exergame-tag">🪑 Seated / Standing</span>
+                <span class="exergame-tag">⚖️ Dynamic Weight Shift</span>
+              </div>
+              <button type="button" class="btn-play-exergame">
+                <span>▶ Play Fullscreen</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Workout Routine Studio Card -->
+      <div class="card workout-studio-card" id="workoutStudioCard" style="margin-bottom: 24px; border: 2.5px solid #22c55e !important; background: linear-gradient(135deg, rgba(240, 253, 244, 0.85), rgba(255, 255, 255, 0.95)) !important;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; border-bottom: 1.5px solid rgba(34, 197, 94, 0.25); padding-bottom: 14px;">
+          <div>
+            <h2 style="font-size: 1.65rem; margin-bottom: 4px; display: flex; align-items: center; gap: 10px;">
+              <span>🏋️</span> <span>AI Workout Routine Studio</span>
+            </h2>
+            <p style="color: var(--ink-soft); font-size: 1.02rem;">
+              Build your customized exercise routine with camera-detected reps, live muscle tracking, and real-time kinematic graphs!
+            </p>
+          </div>
+          <button type="button" class="btn primary" id="btnLaunchWorkoutSession" style="background: #16a34a; border-color: #15803d; font-size: 1.05rem; padding: 12px 26px; border-radius: 999px; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);">
+            <span>▶️ Launch Workout Session (Fullscreen AI Camera)</span>
+          </button>
+        </div>
+
+        <!-- Routine Preset Chips -->
+        <div style="margin-bottom: 18px;">
+          <div style="font-size: 0.82rem; font-weight: 800; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">
+            ⚡ Quick Presets
+          </div>
+          <div class="workout-preset-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="workout-preset-chip active" data-preset="mobility">🌅 Morning Mobility (4 Exercises · 40 Reps)</button>
+            <button type="button" class="workout-preset-chip" data-preset="upper">💪 Upper Body &amp; Posture (5 Exercises · 54 Reps)</button>
+            <button type="button" class="workout-preset-chip" data-preset="lower">🦵 Lower Body &amp; Balance (5 Exercises · 48 Reps)</button>
+            <button type="button" class="workout-preset-chip" data-preset="full">🔥 Full Body LSVT Flow (6 Exercises · 62 Reps)</button>
+            <button type="button" class="workout-preset-chip" data-preset="seated">🪑 Seated / Gentle (6 Exercises · 58 Reps)</button>
+            <button type="button" class="workout-preset-chip" data-preset="custom">✏️ Custom Routine</button>
+          </div>
+        </div>
+
+        <!-- Exercise Builder List -->
+        <div style="font-size: 0.82rem; font-weight: 800; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
+          📋 Routine Exercises &amp; Target Reps
+        </div>
+        <div class="workout-builder-grid" id="workoutBuilderGrid">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Routine Summary Footer -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1.5px solid var(--line);">
+          <div style="font-size: 0.95rem; font-weight: 700; color: var(--ink);">
+            <span>Routine Total: </span>
+            <span id="workoutTotalExCount" style="color: var(--primary-dark);">3 Exercises</span> · 
+            <span id="workoutTotalRepsCount" style="color: #16a34a;">30 Reps</span> · 
+            <span id="workoutEstTime" style="color: var(--ink-soft);">~4 mins</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn" id="btnResetWorkoutDefaults" style="font-size: 0.88rem; padding: 8px 16px;">🔄 Reset to Defaults</button>
+          </div>
         </div>
       </div>
 
@@ -397,6 +476,10 @@
             </div>
             <video class="fg-video" id="fg-webcam" autoplay playsinline></video>
             <canvas class="fg-canvas" id="fg-canvas"></canvas>
+            <div id="fg-hand-status" style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.88); border: 1.5px solid rgba(255, 255, 255, 0.25); color: #fff; padding: 5px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; z-index: 6; backdrop-filter: blur(8px); display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none;">
+              <span id="fg-detection-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #eab308;"></span>
+              <span id="fg-detection-text">⚪ Looking for hand / body...</span>
+            </div>
           </div>
 
           <div class="fg-menu">
@@ -420,7 +503,7 @@
               </div>
             </div>
             <div style="font-size:0.78rem;font-weight:700;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;">BIG amplitude (pose)</div>
-            <div class="fg-ex-cards" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="fg-ex-cards" style="grid-template-columns: repeat(4, 1fr);">
               <div class="fg-ex-card" id="fg-card-reach">
                 <div class="icon">🙌</div>
                 <div class="title">Sky Reach</div>
@@ -432,6 +515,10 @@
               <div class="fg-ex-card" id="fg-card-twist">
                 <div class="icon">🔄</div>
                 <div class="title">Big Twist</div>
+              </div>
+              <div class="fg-ex-card" id="fg-card-clock">
+                <div class="icon">🎯</div>
+                <div class="title">Clock Sway</div>
               </div>
             </div>
 
@@ -553,6 +640,7 @@
               <button type="button" class="fg-voice-mode active" data-mode="sustained">🔊 Sustained &ldquo;Ahhh&rdquo;</button>
               <button type="button" class="fg-voice-mode" data-mode="counting">🔢 Loud Counting</button>
               <button type="button" class="fg-voice-mode" data-mode="phrases">💬 Functional Phrases</button>
+              <button type="button" class="fg-voice-mode" data-mode="pataka">🗣️ Pa-Ta-Ka (DDK)</button>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
@@ -599,6 +687,152 @@
             <tbody id="vt-history-tbody"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div id="settingsPanel" class="view-panel hidden">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
+          <span>⚙️</span> <span>Application Settings &amp; Preferences</span>
+        </h2>
+        <p style="color: var(--ink-soft); font-size: 1.05rem;">
+          Customize your display, auditory cueing, daily habit limits, and camera background preferences. All settings persist automatically on this device.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 24px;">
+        
+        <!-- 1. Appearance & Theme -->
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>🎨</span> <span>Appearance &amp; Legibility</span>
+          </h3>
+          
+          <div style="margin-bottom: 18px;">
+            <label style="font-weight: 700; font-size: 0.95rem; display: block; margin-bottom: 8px;">Color Theme</label>
+            <div class="theme-group" style="display: flex; gap: 10px;" role="group" aria-label="Settings colour theme">
+              <button type="button" class="btn secondary" data-theme="light" style="flex: 1; justify-content: center;">☀️ Light</button>
+              <button type="button" class="btn secondary" data-theme="dark" style="flex: 1; justify-content: center;">🌙 Dark</button>
+              <button type="button" class="btn secondary" data-theme="sepia" style="flex: 1; justify-content: center;">🟫 Sepia</button>
+            </div>
+          </div>
+
+          <div>
+            <label style="font-weight: 700; font-size: 0.95rem; display: block; margin-bottom: 8px;">Text Size &amp; Zoom</label>
+            <div class="textsize-group" style="display: flex; gap: 10px;" role="group" aria-label="Settings text size">
+              <button type="button" class="btn secondary" data-size="normal" style="flex: 1; justify-content: center;">Normal (A)</button>
+              <button type="button" class="btn secondary" data-size="lg" style="flex: 1; justify-content: center;">Large (A+)</button>
+              <button type="button" class="btn secondary" data-size="xl" style="flex: 1; justify-content: center;">Max (A++)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Today's Rhythm & Clock Face Rules -->
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>⏰</span> <span>24-Hour Rhythm Clock</span>
+          </h3>
+
+          <div style="background: var(--surface-2); border: 2px solid var(--line); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 14px;">
+            <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;">🌅 Daytime Orbit (6:00 AM – 6:00 PM)</div>
+            <div style="font-size: 0.85rem; color: var(--ink-soft);">Events sit on the <strong>inner rim</strong> (closer to clock center) for daytime clarity.</div>
+          </div>
+
+          <div style="background: var(--surface-2); border: 2px solid var(--line); border-radius: var(--radius-sm); padding: 14px;">
+            <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;">🌙 Nighttime Orbit (6:00 PM – 6:00 AM)</div>
+            <div style="font-size: 0.85rem; color: var(--ink-soft);">Events shift to the <strong>outer ring</strong> track, preventing visual clutter across 24 hours.</div>
+          </div>
+        </div>
+
+        <!-- 3. Sound & Audio Synthesizer -->
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>🔊</span> <span>Auditory Cueing &amp; Chimes</span>
+          </h3>
+
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Sound Effects &amp; Chimes</div>
+                <div style="font-size: 0.85rem; color: var(--ink-soft);">Harmonic tone cues on exercises and dose logging</div>
+              </div>
+              <button type="button" class="btn secondary" id="btnTestSound" style="padding: 8px 16px;">🔔 Test Chime</button>
+            </div>
+
+            <div style="border-top: 1px solid var(--line); padding-top: 12px;">
+              <label for="settingsMetronomeBpm" style="font-weight: 700; font-size: 0.95rem; display: block; margin-bottom: 6px;">
+                Default Freezing Metronome Pace (BPM): <span id="settingsBpmDisplay" style="color:var(--primary);font-weight:800;">90</span>
+              </label>
+              <input type="range" id="settingsMetronomeBpm" min="60" max="130" value="90" step="5" style="width: 100%;">
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Daily Habit & Target Limits -->
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>🎯</span> <span>Daily Goals &amp; Habit Limits</span>
+          </h3>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Daily Exercise Target</div>
+                <div style="font-size: 0.85rem; color: var(--ink-soft);">Trackers ring progress limit</div>
+              </div>
+              <input type="number" id="settingsExerLimitInput" min="1" max="10" value="3" style="width: 70px; padding: 6px 10px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 800; text-align: center;">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">Daily Meal Target</div>
+                <div style="font-size: 0.85rem; color: var(--ink-soft);">Meal tracking limit</div>
+              </div>
+              <input type="number" id="settingsMealLimitInput" min="1" max="10" value="3" style="width: 70px; padding: 6px 10px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 800; text-align: center;">
+            </div>
+
+            <button type="button" class="btn primary" id="btnSaveSettingsLimits" style="margin-top: 6px; justify-content: center;">💾 Save Goal Targets</button>
+          </div>
+        </div>
+
+        <!-- 5. Camera & MediaPipe Background Preferences -->
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>📹</span> <span>Camera &amp; Background Display</span>
+          </h3>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="background: rgba(14, 165, 233, 0.08); border: 1.5px solid rgba(14, 165, 233, 0.25); border-radius: var(--radius-sm); padding: 12px;">
+              <div style="font-weight: 700; font-size: 0.95rem; color: var(--primary-dark); margin-bottom: 4px;">Live Mirror AR Video</div>
+              <div style="font-size: 0.85rem; color: var(--ink-soft);">The camera output is rendered directly as the live full-screen background for movement exergames.</div>
+            </div>
+
+            <div style="font-size: 0.85rem; color: var(--ink-soft); line-height: 1.5;">
+              Camera data is processed 100% locally on your device GPU with MediaPipe. No video or frames ever leave your computer.
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Data, Clinical Summary & Backup -->
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>💾</span> <span>Data, Clinical Reports &amp; Privacy</span>
+          </h3>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button type="button" class="btn secondary" id="settingsPrivacyModalBtn" style="justify-content: flex-start; gap: 10px;">🔒 GDPR Privacy &amp; Data Protection Notice</button>
+            <button type="button" class="btn secondary" id="settingsDoctorReportBtn" style="justify-content: flex-start; gap: 10px;">💼 Share Clinical Summary with Neurologist</button>
+            <button type="button" class="btn secondary" id="settingsMedicalIdBtn" style="justify-content: flex-start; gap: 10px;">🆘 View Emergency Medical ID Card</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button type="button" class="btn secondary" id="settingsExportDataBtn" style="flex: 1; justify-content: center;">📤 Export JSON</button>
+              <button type="button" class="btn secondary" id="settingsImportDataBtn" style="flex: 1; justify-content: center;">📥 Import Backup</button>
+            </div>
+            <button type="button" class="btn secondary" id="settingsDemoDataBtn" style="justify-content: flex-start; gap: 10px;">🧪 Generate 7-Day Demo Dataset</button>
+            <button type="button" class="btn secondary" id="settingsClearDataBtn" style="color: #DC2626; border-color: rgba(220, 38, 38, 0.3); justify-content: flex-start; gap: 10px;">🗑️ Clear All Health Data</button>
+          </div>
+        </div>
+
       </div>
     </div>
 

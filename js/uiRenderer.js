@@ -34,7 +34,10 @@ window.Cadence = window.Cadence || {};
     activity: 'Exercise / Activity',
     symptoms: 'Symptoms',
     medication: 'Medication',
-    gait: 'Gait & Balance'
+    gait: 'Gait & Balance',
+    motor: 'Motor State',
+    mood: 'Mood Check-in',
+    fingerGym: 'Movement Assessment'
   };
 
   const PANEL_ICONS = {
@@ -44,7 +47,10 @@ window.Cadence = window.Cadence || {};
     drink: '🥤',
     activity: '🎯',
     symptoms: '🤒',
-    gait: '🦯'
+    gait: '🦯',
+    motor: '⚡',
+    mood: '💭',
+    fingerGym: '🏃'
   };
 
   let editingMedId = null;
@@ -79,7 +85,7 @@ window.Cadence = window.Cadence || {};
   function buildClock() {
     const f = document.getElementById('clockFace');
     if (!f) return;
-    f.querySelectorAll('.marker, .hand, .activity-dot, .med-schedule-label, .orbit-ring').forEach(e => e.remove());
+    f.querySelectorAll('.marker, .hand, .activity-dot, .med-schedule-label, .orbit-ring, .clock-num').forEach(e => e.remove());
     
     // Outer PM Orbit Track Guide Ring (Second 12 Hours)
     const orbit = document.createElement('div');
@@ -92,6 +98,21 @@ window.Cadence = window.Cadence || {};
       m.style.transform = 'rotate(' + (i * 6) + 'deg)';
       f.appendChild(m);
     }
+
+    // High-Legibility Hour Numerals 1 to 12 - Precisely centered
+    const cx = 185, cy = 185, rNum = 140;
+    for (let h = 1; h <= 12; h++) {
+      const angle = (h * 30) * Math.PI / 180;
+      const nx = cx + rNum * Math.sin(angle);
+      const ny = cy - rNum * Math.cos(angle);
+      const numEl = document.createElement('span');
+      numEl.className = 'clock-num' + (h % 3 === 0 ? ' cardinal' : '');
+      numEl.style.left = nx + 'px';
+      numEl.style.top = ny + 'px';
+      numEl.textContent = h;
+      f.appendChild(numEl);
+    }
+
     ['second', 'minute', 'hour'].forEach(s => {
       const h = document.createElement('div');
       h.className = 'hand ' + s;
@@ -187,6 +208,8 @@ window.Cadence = window.Cadence || {};
 
   function resolveActivityEmoji(detail) {
     const d = String(detail || '').toLowerCase();
+    if (d.includes('clock') || d.includes('reach') || d.includes('lsvt') || d.includes('sky')) return '🎯';
+    if (d.includes('pataka') || d.includes('diadochokinesis')) return '🗣️';
     if (d.includes('walk') || d.includes('step') || d.includes('stroll')) return '🚶';
     if (d.includes('run') || d.includes('jog')) return '🏃';
     if (d.includes('cycl') || d.includes('bike') || d.includes('ride')) return '🚴';
@@ -197,7 +220,7 @@ window.Cadence = window.Cadence || {};
     if (d.includes('dino') || d.includes('jump')) return '🦖';
     if (d.includes('voice') || d.includes('speech') || d.includes('sing') || d.includes('loud')) return '🗣️';
     if (d.includes('finger') || d.includes('tap') || d.includes('gym')) return '🖐️';
-    if (d.includes('weight') || d.includes('gym') || d.includes('resistance')) return '🏋️';
+    if (d.includes('weight') || d.includes('resistance')) return '🏋️';
     return '🏃';
   }
 
@@ -210,11 +233,12 @@ window.Cadence = window.Cadence || {};
     return '🦯';
   }
 
-  function getTodayEvents() {
+  function getDayEvents(targetDate) {
     const state = getState();
     const { todayStr, isToday, escapeHtml, fmtTime, timeToMinutes, nowHM } = getHelpers();
     const { medTakenToday, isSkippedToday } = getMeds();
-    const today = todayStr();
+    const date = targetDate || todayStr();
+    const isTargetToday = isToday(date);
     const events = [];
 
     const short = (s, n) => {
@@ -225,36 +249,39 @@ window.Cadence = window.Cadence || {};
     // 1. Scheduled Meds (Scheduled, Taken, Skipped)
     (state.meds || []).forEach(m => {
       (m.times || []).forEach(t => {
-        const taken = medTakenToday(m.id, t);
-        const skipped = isSkippedToday(m.id, t);
-        const icon = taken ? '✅' : skipped ? '⏭️' : '💊';
-        const kind = taken ? 'med-taken' : skipped ? 'med-skip' : 'med';
-        const borderColor = taken ? '#16A34A' : skipped ? '#9CA3AF' : '#E11D48';
-        const statusText = taken ? 'taken' : skipped ? 'skipped' : 'scheduled';
-        events.push({
-          type: 'medication',
-          medId: m.id,
-          id: m.id + '_' + t,
-          time: t,
-          icon: icon,
-          emoji: icon,
-          label: short(m.name.split(/[\s/]/)[0], 10),
-          kind: kind,
-          borderColor: borderColor,
-          tip: (m.name || '') + (m.dose ? ' ' + m.dose : '') + ' · ' + statusText,
-          onClick: () => {
-            if (!taken && !skipped) {
-              getMeds().logDoseTaken(m.id, t);
-            } else {
-              getModals().showToast(`${m.name} (${fmtTime(t)}) · ${statusText}`);
+        const taken = (state.medLog || []).some(l => l.medId === m.id && l.time === t && l.date === date);
+        const skipped = (state.medSkips || []).some(s => s.medId === m.id && s.time === t && s.date === date);
+        
+        if (isTargetToday || taken || skipped) {
+          const icon = taken ? '✅' : skipped ? '⏭️' : '💊';
+          const kind = taken ? 'med-taken' : skipped ? 'med-skip' : 'med';
+          const borderColor = taken ? '#16A34A' : skipped ? '#9CA3AF' : '#E11D48';
+          const statusText = taken ? 'taken' : skipped ? 'skipped' : 'scheduled';
+          events.push({
+            type: 'medication',
+            medId: m.id,
+            id: m.id + '_' + t,
+            time: t,
+            icon: icon,
+            emoji: icon,
+            label: short(m.name.split(/[\s/]/)[0], 10),
+            kind: kind,
+            borderColor: borderColor,
+            tip: (m.name || '') + (m.dose ? ' ' + m.dose : '') + ' · ' + statusText,
+            onClick: () => {
+              if (isTargetToday && !taken && !skipped) {
+                getMeds().logDoseTaken(m.id, t);
+              } else {
+                getModals().showToast(`${m.name} (${fmtTime(t)}) · ${statusText}`);
+              }
             }
-          }
-        });
+          });
+        }
       });
     });
 
     // 2. Motor States (ON, DYSKINESIA, OFF)
-    (state.onOffLogs || []).filter(l => l.date === today).forEach(l => {
+    (state.onOffLogs || []).filter(l => l.date === date).forEach(l => {
       const map = {
         ON: { icon: '🟢', label: 'ON', kind: 'motor-on', borderColor: '#16A34A' },
         ON_DYSKINESIA: { icon: '🟡', label: 'Dysk', kind: 'motor-dys', borderColor: '#CA8A04' },
@@ -271,12 +298,12 @@ window.Cadence = window.Cadence || {};
         kind: m.kind,
         borderColor: m.borderColor,
         tip: 'Motor: ' + l.state,
-        onClick: () => getModals().showToast(`Motor State: ${l.state} logged at ${fmtTime(l.time)}`)
+        onClick: () => viewEntry('motor', l.id)
       });
     });
 
     // 3. Mood Logs
-    (state.moodLogs || []).filter(m => m.date === today).forEach(m => {
+    (state.moodLogs || []).filter(m => m.date === date).forEach(m => {
       const icons = { great: '😊', ok: '😐', low: '😔', anxious: '😰', foggy: '🌫️' };
       const icon = icons[m.mood] || '💭';
       events.push({
@@ -289,12 +316,12 @@ window.Cadence = window.Cadence || {};
         kind: 'mood',
         borderColor: '#8B5CF6',
         tip: 'Mood: ' + m.mood,
-        onClick: () => getModals().showToast(`Mood: ${m.mood} at ${fmtTime(m.time)}`)
+        onClick: () => viewEntry('mood', m.id)
       });
     });
 
     // 4. Meal & Drink & Activity Logs
-    (state.logs || []).filter(l => l.date === today).forEach(l => {
+    (state.logs || []).filter(l => l.date === date).forEach(l => {
       if (l.type === 'meal') {
         const isP = l.options && l.options.includes('protein');
         const icon = resolveMealEmoji(l);
@@ -343,7 +370,7 @@ window.Cadence = window.Cadence || {};
     });
 
     // 5. Symptoms
-    (state.symptoms || []).filter(s => s.date === today).forEach(s => {
+    (state.symptoms || []).filter(s => s.date === date).forEach(s => {
       const names = Array.isArray(s.name) ? s.name.join(', ') : (s.name || 'Symptom');
       const icon = resolveSymptomEmoji(names);
       events.push({
@@ -361,7 +388,7 @@ window.Cadence = window.Cadence || {};
     });
 
     // 6. Gait & Balance
-    (state.gait || []).filter(g => g.date === today).forEach(g => {
+    (state.gait || []).filter(g => g.date === date).forEach(g => {
       const icon = resolveGaitEmoji(g.type);
       const borders = { fall: '#DC2626', freeze: '#0284C7', gait: '#7C3AED', shuffle: '#64748B' };
       events.push({
@@ -379,10 +406,10 @@ window.Cadence = window.Cadence || {};
     });
 
     // 7. Finger Gym & Exergame & Voice Logs
-    (state.fingerGymLogs || []).filter(r => r.date === today).forEach(r => {
+    (state.fingerGymLogs || []).filter(r => r.date === date).forEach(r => {
       const icon = resolveActivityEmoji(r.exercise);
       events.push({
-        type: 'exercise',
+        type: 'fingerGym',
         id: r.id,
         time: r.time,
         icon: icon,
@@ -391,7 +418,23 @@ window.Cadence = window.Cadence || {};
         kind: 'exercise',
         borderColor: '#047857',
         tip: (r.exercise || 'Session') + (r.score != null ? ' · score ' + r.score : ''),
-        onClick: () => getModals().showToast(`${r.exercise} score: ${r.score} at ${fmtTime(r.time)}`)
+        onClick: () => viewEntry('fingerGym', r.id)
+      });
+    });
+
+    // 8. Sleep Logs
+    (state.sleep || []).filter(s => s.date === date && !s.dismissed).forEach(s => {
+      events.push({
+        type: 'sleep',
+        id: s.id,
+        time: s.time || '07:00',
+        icon: '🛌',
+        emoji: '🛌',
+        label: s.rating ? `${s.rating}★ Sleep` : 'Sleep',
+        kind: 'sleep',
+        borderColor: '#7C3AED',
+        tip: 'Sleep: ' + (s.rating ? s.rating + '/5 stars' : 'Logged') + (s.notes ? ' — ' + s.notes : ''),
+        onClick: () => viewEntry('sleep', s.id)
       });
     });
 
@@ -399,12 +442,16 @@ window.Cadence = window.Cadence || {};
     return events;
   }
 
+  function getTodayEvents() {
+    return getDayEvents(getHelpers().todayStr());
+  }
+
   function renderClockDots() {
     const f = document.getElementById('clockFace');
     if (!f) return;
     f.querySelectorAll('.activity-dot, .med-schedule-label').forEach(e => e.remove());
-    const cx = 230;
-    const cy = 230;
+    const cx = 185;
+    const cy = 185;
 
     const state = getState();
     const { fmtTime } = getHelpers();
@@ -415,16 +462,16 @@ window.Cadence = window.Cadence || {};
       const a = timeToAngle(entry.time) * Math.PI / 180;
       const [h, m] = entry.time.split(':').map(Number);
       
-      // Daytime 6:00 AM to 6:00 PM (360 to 1080 mins): Inside clock rim (210px)
-      // Nighttime 6:00 PM to 6:00 AM: Outside orbit (262px)
+      // Daytime 6:00 AM to 6:00 PM (360 to 1080 mins): Rim of clock (182px)
+      // Nighttime 6:00 PM to 6:00 AM: Outer orbit ring (230px)
       const totalMinutes = h * 60 + (m || 0);
       const isDaytime = totalMinutes >= 360 && totalMinutes < 1080;
-      const dotR = isDaytime ? 210 : 262;
+      const dotR = isDaytime ? 182 : 230;
 
       const dot = document.createElement('button');
       dot.className = 'activity-dot ' + (isDaytime ? 'dot-am' : 'dot-pm');
-      dot.style.left = (cx + dotR * Math.sin(a) - 21) + 'px';
-      dot.style.top = (cy - dotR * Math.cos(a) - 21) + 'px';
+      dot.style.left = (cx + dotR * Math.sin(a) - 19) + 'px';
+      dot.style.top = (cy - dotR * Math.cos(a) - 19) + 'px';
       dot.style.borderColor = entry.borderColor || 'var(--primary)';
       dot.style.background = 'var(--surface)';
       dot.innerHTML = entry.icon;
@@ -444,7 +491,7 @@ window.Cadence = window.Cadence || {};
       (m.times || []).forEach(t => {
         const angle = timeToAngle(t);
         const a = angle * Math.PI / 180;
-        const rText = 168;
+        const rText = 142;
         const label = document.createElement('div');
         label.className = 'med-schedule-label';
         label.style.position = 'absolute';
@@ -476,12 +523,53 @@ window.Cadence = window.Cadence || {};
     const sec = n.getSeconds();
     if (sec !== _lastDigitalSec) {
       _lastDigitalSec = sec;
-      const timeStr = n.toLocaleTimeString();
       const dtEl = document.getElementById('clockDateTime');
       if (dtEl) {
+        const hours = n.getHours();
+        const mins = String(n.getMinutes()).padStart(2, '0');
+        const secs = String(n.getSeconds()).padStart(2, '0');
+        const isPM = hours >= 12;
+        const displayHours = hours % 12 || 12;
+        const ampm = isPM ? 'PM' : 'AM';
+
+        let periodTag = '☀️ Morning';
+        let periodClass = 'morning';
+        if (hours >= 21 || hours < 6) {
+          periodTag = '🌙 Night';
+          periodClass = 'night';
+        } else if (hours >= 17) {
+          periodTag = '🌅 Evening';
+          periodClass = 'evening';
+        } else if (hours >= 12) {
+          periodTag = '🌤️ Afternoon';
+          periodClass = 'afternoon';
+        }
+
         const dayName = n.toLocaleDateString(undefined, { weekday: 'long' });
-        const dateStr = n.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-        dtEl.innerHTML = `<span class="clock-day-text">📅 ${dayName}, ${dateStr}</span> <span class="clock-time-sep">•</span> <span class="clock-time-text">⏰ ${timeStr}</span>`;
+        const dateStr = n.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
+        dtEl.innerHTML = `
+          <div class="chrono-date-side">
+            <div class="chrono-day-line">
+              <span class="chrono-cal-dot">🗓️</span>
+              <span class="chrono-day-name">${dayName}</span>
+              <span class="chrono-period-badge ${periodClass}">${periodTag}</span>
+            </div>
+            <div class="chrono-date-sub-line">
+              <span class="chrono-date-sub">${dateStr}</span>
+              <button type="button" class="btn-chrono-history" id="openHistoryModalBtn" aria-label="View previous entries and recorded rhythms">
+                <span>📅 Previous entries</span>
+              </button>
+            </div>
+          </div>
+          <div class="chrono-time-side">
+            <div class="chrono-digits-wrap">
+              <span class="chrono-hours-mins">${displayHours}:${mins}</span>
+              <span class="chrono-seconds">:${secs}</span>
+              <span class="chrono-ampm">${ampm}</span>
+            </div>
+          </div>
+        `;
       }
     }
   }
@@ -685,6 +773,9 @@ window.Cadence = window.Cadence || {};
     if (type === 'sleep') entry = (state.sleep || []).find(e => e.id === id);
     else if (type === 'symptoms') entry = (state.symptoms || []).find(e => e.id === id);
     else if (type === 'gait') entry = (state.gait || []).find(e => e.id === id);
+    else if (type === 'motor') entry = (state.onOffLogs || []).find(e => e.id === id);
+    else if (type === 'mood') entry = (state.moodLogs || []).find(e => e.id === id);
+    else if (type === 'fingerGym' || type === 'exergame') entry = (state.fingerGymLogs || []).find(e => e.id === id);
     else entry = (state.logs || []).find(e => e.id === id);
 
     if (!entry) {
@@ -700,6 +791,10 @@ window.Cadence = window.Cadence || {};
     else if (type === 'symptoms') icon = resolveSymptomEmoji(entry.name);
     else if (type === 'gait') icon = resolveGaitEmoji(entry.type);
     else if (type === 'activity' || type === 'exercise') icon = resolveActivityEmoji(entry.detail);
+    else if (type === 'motor') icon = entry.state === 'OFF' ? '🔴' : entry.state === 'ON_DYSKINESIA' ? '🟡' : '🟢';
+    else if (type === 'mood') icon = '💭';
+    else if (type === 'fingerGym' || type === 'exergame') icon = resolveActivityEmoji(entry.exercise);
+
     const title = PANEL_LABELS[type] || 'Entry';
 
     let media = '';
@@ -762,6 +857,40 @@ window.Cadence = window.Cadence || {};
           <textarea id="editNotes" style="width:100%;border:3px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;font-size:1.05rem;min-height:80px;">${escapeHtml(entry.notes || '')}</textarea>
         </div>
       `;
+    } else if (type === 'motor') {
+      c.innerHTML = `
+        <div class="view-field"><span class="vf-label">Type</span><div class="vf-value">⚡ Motor State Check-in</div></div>
+        <div class="view-field"><span class="vf-label">Motor State</span>
+          <select id="editMotorState" style="width:100%;border:3px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;font-size:1.05rem;background:var(--surface);color:var(--ink);">
+            <option value="ON" ${entry.state === 'ON' ? 'selected' : ''}>🟢 ON (Medication working smoothly)</option>
+            <option value="ON_DYSKINESIA" ${entry.state === 'ON_DYSKINESIA' ? 'selected' : ''}>🟡 ON + Dyskinesia (Involuntary movements)</option>
+            <option value="OFF" ${entry.state === 'OFF' ? 'selected' : ''}>🔴 OFF (Medication wearing off / stiff)</option>
+          </select>
+        </div>
+        <div class="view-field"><span class="vf-label">Time</span>
+          <input type="time" id="editTime" value="${entry.time || ''}" style="width:100%;border:3px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;font-size:1.05rem;">
+        </div>
+      `;
+    } else if (type === 'mood') {
+      c.innerHTML = `
+        <div class="view-field"><span class="vf-label">Type</span><div class="vf-value">💭 Mood Check-in</div></div>
+        <div class="view-field"><span class="vf-label">Mood</span>
+          <input type="text" id="editMood" value="${escapeHtml(entry.mood || '')}" style="width:100%;border:3px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;font-size:1.05rem;">
+        </div>
+        <div class="view-field"><span class="vf-label">Time</span>
+          <input type="time" id="editTime" value="${entry.time || ''}" style="width:100%;border:3px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;font-size:1.05rem;">
+        </div>
+      `;
+    } else if (type === 'fingerGym' || type === 'exergame') {
+      c.innerHTML = `
+        <div class="view-field"><span class="vf-label">Type</span><div class="vf-value">🏃 Movement Assessment Log</div></div>
+        <div class="view-field"><span class="vf-label">Exercise</span>
+          <div class="vf-value">${escapeHtml(entry.exercise || 'Exercise')} (Score: ${entry.score != null ? entry.score : '—'})</div>
+        </div>
+        <div class="view-field"><span class="vf-label">Time</span>
+          <input type="time" id="editTime" value="${entry.time || ''}" style="width:100%;border:3px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;font-size:1.05rem;">
+        </div>
+      `;
     } else {
       const typeLabel = entry.type === 'meal' ? 'Food' : entry.type === 'drink' ? 'Drink' : 'Activity';
       c.innerHTML = `
@@ -810,6 +939,14 @@ window.Cadence = window.Cadence || {};
       entry.activity = document.getElementById('editActivity')?.value.trim() || entry.activity || '';
       entry.notes = notes;
       entry.time = time;
+    } else if (type === 'motor') {
+      entry.state = document.getElementById('editMotorState')?.value || entry.state;
+      entry.time = time;
+    } else if (type === 'mood') {
+      entry.mood = document.getElementById('editMood')?.value.trim() || entry.mood;
+      entry.time = time;
+    } else if (type === 'fingerGym' || type === 'exergame') {
+      entry.time = time;
     } else {
       entry.detail = document.getElementById('editDetail')?.value.trim() || entry.detail;
       entry.notes = notes;
@@ -822,6 +959,39 @@ window.Cadence = window.Cadence || {};
     renderAll();
     getAudio().playSound('success');
     getModals().showToast('Saved!');
+  }
+
+  function deleteCurrentEntry() {
+    if (!editingEntry) return;
+    const { type, id } = editingEntry;
+    const state = getState();
+
+    if (!confirm('🗑️ Permanently delete this log entry?\n\nIt will be completely removed from Today\'s Rhythm, the 24-Hour Clock, and local storage.')) {
+      return;
+    }
+
+    if (type === 'sleep') {
+      state.sleep = (state.sleep || []).filter(e => e.id !== id);
+    } else if (type === 'symptoms') {
+      state.symptoms = (state.symptoms || []).filter(e => e.id !== id);
+    } else if (type === 'gait') {
+      state.gait = (state.gait || []).filter(e => e.id !== id);
+    } else if (type === 'motor') {
+      state.onOffLogs = (state.onOffLogs || []).filter(e => e.id !== id);
+    } else if (type === 'mood') {
+      state.moodLogs = (state.moodLogs || []).filter(e => e.id !== id);
+    } else if (type === 'fingerGym' || type === 'exergame') {
+      state.fingerGymLogs = (state.fingerGymLogs || []).filter(e => e.id !== id);
+    } else {
+      state.logs = (state.logs || []).filter(e => e.id !== id);
+    }
+
+    saveState();
+    getModals().closeModal('viewEntryModal');
+    editingEntry = null;
+    renderAll();
+    getAudio().playSound('click');
+    getModals().showToast('Log entry deleted 🗑️');
   }
 
   function renderDoctorReport() {
@@ -946,6 +1116,186 @@ window.Cadence = window.Cadence || {};
     localStorage.setItem(window.Cadence.dataStore.TEXTSIZE_KEY, sz);
   }
 
+  let _selectedHistoryDate = '';
+
+  function getSelectedHistoryDate() {
+    if (!_selectedHistoryDate) {
+      _selectedHistoryDate = getHelpers().getPastDateString(1);
+    }
+    return _selectedHistoryDate;
+  }
+
+  function setSelectedHistoryDate(d) {
+    _selectedHistoryDate = d;
+    renderHistoryView();
+  }
+
+  function stepHistoryDate(delta) {
+    const cur = getSelectedHistoryDate();
+    const d = new Date(cur + 'T12:00:00');
+    d.setDate(d.getDate() + delta);
+    const newStr = d.toISOString().slice(0, 10);
+    const today = getHelpers().todayStr();
+    if (newStr > today) return;
+    setSelectedHistoryDate(newStr);
+  }
+
+  function renderHistoryView() {
+    const dStr = getSelectedHistoryDate();
+    const { fmtTime, escapeHtml, todayStr, getPastDateString } = getHelpers();
+    const today = todayStr();
+    const yesterday = getPastDateString(1);
+
+    // Update Date Input & Label
+    const dateInput = document.getElementById('histDatePicker');
+    const dateLabel = document.getElementById('histSelectedDateLabel');
+    const nextBtn = document.getElementById('histNextDayBtn');
+    const countBadge = document.getElementById('historyEventCountBadge');
+    const dateSub = document.getElementById('histRhythmDateSub');
+
+    if (dateInput) {
+      dateInput.value = dStr;
+      dateInput.max = today;
+    }
+
+    if (nextBtn) {
+      nextBtn.disabled = dStr >= today;
+    }
+
+    const dObj = new Date(dStr + 'T12:00:00');
+    const prettyDate = dObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    const isYest = dStr === yesterday;
+    const isTod = dStr === today;
+
+    if (dateLabel) {
+      dateLabel.textContent = isYest ? `Yesterday (${prettyDate})` : isTod ? `Today (${prettyDate})` : prettyDate;
+    }
+    if (dateSub) {
+      dateSub.textContent = `— ${prettyDate}`;
+    }
+
+    const events = getDayEvents(dStr);
+    if (countBadge) {
+      countBadge.textContent = `${events.length} event${events.length === 1 ? '' : 's'}`;
+    }
+
+    // 1. Build & Populate Historical Clock Face
+    const f = document.getElementById('histClockFace');
+    if (f) {
+      f.querySelectorAll('.hist-marker, .hist-orbit-ring, .hist-num, .hist-activity-dot, .hist-center-dot').forEach(e => e.remove());
+      
+      // Center Dot
+      const cDot = document.createElement('div');
+      cDot.className = 'hist-center-dot';
+      f.appendChild(cDot);
+
+      // Night Orbit Ring
+      const orbit = document.createElement('div');
+      orbit.className = 'hist-orbit-ring';
+      f.appendChild(orbit);
+
+      // Dial Markers (12 hours)
+      for (let i = 0; i < 12; i++) {
+        const m = document.createElement('div');
+        m.className = 'hist-marker' + (i % 3 === 0 ? ' major' : ' minor');
+        m.style.transform = 'rotate(' + (i * 30) + 'deg)';
+        f.appendChild(m);
+      }
+
+      // High contrast numbers 1 to 12
+      const cx = 165, cy = 165, rNum = 132;
+      for (let h = 1; h <= 12; h++) {
+        const angle = (h * 30) * Math.PI / 180;
+        const nx = cx + rNum * Math.sin(angle);
+        const ny = cy - rNum * Math.cos(angle);
+        const numEl = document.createElement('span');
+        const isCardinal = (h % 3 === 0);
+        numEl.className = 'hist-num' + (isCardinal ? ' cardinal' : '');
+        numEl.style.left = nx + 'px';
+        numEl.style.top = ny + 'px';
+        numEl.textContent = h;
+        f.appendChild(numEl);
+      }
+
+      // Render Historical Activity Dots
+      events.forEach(entry => {
+        if (!entry.time) return;
+        const a = timeToAngle(entry.time) * Math.PI / 180;
+        const [h, m] = entry.time.split(':').map(Number);
+        const totalMinutes = h * 60 + (m || 0);
+        const isDaytime = totalMinutes >= 360 && totalMinutes < 1080;
+        const dotR = isDaytime ? 144 : 186;
+
+        const dot = document.createElement('button');
+        dot.className = 'hist-activity-dot ' + (isDaytime ? 'dot-am' : 'dot-pm');
+        dot.style.left = (cx + dotR * Math.sin(a) - 19) + 'px';
+        dot.style.top = (cy - dotR * Math.cos(a) - 19) + 'px';
+        dot.style.borderColor = entry.borderColor || 'var(--primary)';
+        dot.style.background = 'var(--surface)';
+        dot.innerHTML = entry.icon;
+        dot.title = (entry.tip || entry.label) + ' (' + fmtTime(entry.time) + ')';
+        dot.setAttribute('aria-label', (entry.tip || entry.label) + ' at ' + fmtTime(entry.time));
+        dot.addEventListener('click', () => {
+          getAudio().playSound('click');
+          if (entry.onClick) entry.onClick();
+          else viewEntry(entry.type, entry.id);
+        });
+        f.appendChild(dot);
+      });
+    }
+
+    // 2. Replicate Daily Rhythm Event Grid (Fills square panel properly)
+    const ribEl = document.getElementById('histDayRibbon');
+    if (ribEl) {
+      if (!events.length) {
+        ribEl.innerHTML = `
+          <div class="hist-empty-state" style="grid-column: 1 / -1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 48px 20px; text-align:center; background:var(--surface); border:2px dashed var(--line); border-radius:var(--radius-md); gap:8px; width:100%;">
+            <span style="font-size:2.4rem;">📋</span>
+            <span style="font-weight:800;font-size:1.1rem;color:var(--ink);">No events recorded on this date</span>
+            <span style="color:var(--ink-soft);font-size:0.9rem;">Use ◀ / ▶ or the date selector above to inspect other past days.</span>
+          </div>
+        `;
+      } else {
+        ribEl.innerHTML = events.map(it => {
+          const tip = escapeHtml(it.tip || it.label);
+          const badgeText = escapeHtml((it.kind || it.type || '').replace('med-', '').replace('motor-', ''));
+          const showDetail = it.tip && it.tip !== it.label;
+          return `
+            <div class="hist-event-card ${it.kind}" role="listitem" title="${tip} at ${fmtTime(it.time)}" tabindex="0">
+              <div class="hec-header">
+                <span class="hec-time">${fmtTime(it.time)}</span>
+                <span class="hec-kind-badge">${badgeText}</span>
+              </div>
+              <div class="hec-body">
+                <span class="hec-icon">${it.icon}</span>
+                <span class="hec-title">${escapeHtml(it.label)}</span>
+              </div>
+              ${showDetail ? `<div class="hec-detail">${escapeHtml(it.tip)}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+
+        ribEl.querySelectorAll('.hist-event-card').forEach((card, idx) => {
+          const it = events[idx];
+          if (it) {
+            const handleCardClick = () => {
+              getAudio().playSound('click');
+              if (it.onClick) it.onClick();
+              else viewEntry(it.type, it.id);
+            };
+            card.addEventListener('click', handleCardClick);
+            card.addEventListener('keydown', e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick();
+              }
+            });
+          }
+        });
+      }
+    }
+  }
+
   function renderAll() {
     try { renderMeds(); } catch (e) { console.error("renderMeds failed:", e); }
     try { renderClockDots(); } catch (e) { console.error("renderClockDots failed:", e); }
@@ -962,6 +1312,7 @@ window.Cadence = window.Cadence || {};
     } catch (e) { console.error("renderInsightsTab failed:", e); }
     try { renderDayRibbon(); } catch (e) {}
     try { getHabits().renderHabitTracker(); } catch (e) {}
+    try { renderHistoryView(); } catch (e) { console.error("renderHistoryView failed:", e); }
   }
 
   window.Cadence.uiRenderer = {
@@ -975,10 +1326,16 @@ window.Cadence = window.Cadence || {};
     renderDayRibbon,
     viewEntry,
     saveEditedEntry,
+    deleteCurrentEntry,
     renderDoctorReport,
     checkProteinConflictNudge,
     applyTheme,
     applyTextSize,
+    getDayEvents,
+    getSelectedHistoryDate,
+    setSelectedHistoryDate,
+    stepHistoryDate,
+    renderHistoryView,
     renderAll
   };
 })();

@@ -22,19 +22,50 @@ window.Cadence = window.Cadence || {};
       <div class="gate" id="consentGate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
         <div class="gatecard">
           <h1 id="gateTitle">Before you start</h1>
-          <p class="lead">Cadence helps you track Parkinson's-related health data including medications, symptoms, gait, sleep, and diet. Under the GDPR, this qualifies as health data and requires your explicit consent.</p>
+          <p class="lead">Cadence helps you track Parkinson's-related health data including medications, symptoms, gait, sleep, and diet. Under the General Data Protection Regulation (GDPR), this qualifies as special category health data and requires your explicit consent.</p>
           <div class="policytext" tabindex="0" aria-label="Privacy notice">
-            <h3>What data is processed</h3><p>Medication schedules &amp; doses, symptom logs, gait/balance events, sleep ratings, meal logs, activity records, voice memos, and photos — all classified as health data under Art. 9 GDPR.</p>
-            <h3>Where &amp; how it's stored</h3><p>All data is stored exclusively in your browser's <strong>localStorage</strong> on this device. No data is transmitted, uploaded, or shared with any server, third party, or cloud service.</p>
-            <h3>Legal basis (Art. 6 &amp; 9 GDPR)</h3><p>Processing is based on your <strong>explicit consent</strong> (Art. 9(2)(a)). You may withdraw at any time, which permanently deletes all data.</p>
-            <h3>Data retention</h3><p>Data is retained indefinitely on this device until you either <strong>delete it</strong> (footer → Clear all data) or <strong>withdraw consent</strong> (footer → Withdraw consent), which triggers permanent erasure.</p>
-            <h3>Your rights (Art. 15–22 GDPR)</h3><ul><li><strong>Access</strong> — export your data anytime via footer.</li><li><strong>Rectification</strong> — edit or delete individual entries.</li><li><strong>Erasure</strong> — delete all data or withdraw consent.</li><li><strong>Portability</strong> — export as JSON, import on any device.</li><li><strong>Withdraw consent</strong> — deletes all data immediately.</li></ul>
-            <h3>Data Protection Officer</h3><p><strong>Not applicable</strong> — no data leaves this device. No processing outside your control occurs. For any privacy questions, contact <strong>cadence@app.local</strong>.</p>
-            <h3>Age requirement</h3><p>You must be <strong>16 years or older</strong> to use Cadence. If you are under 16, please do not use this application.</p>
+            <h3>1. What Data is Processed</h3>
+            <p>Medication schedules &amp; doses, symptom logs, gait/balance events, sleep ratings, meal logs, activity records, voice memos, and photos — all classified as special category health data under <strong>Art. 9(1) GDPR</strong>.</p>
+
+            <h3>2. Legal Basis — Explicit Consent Only (Art. 9(2)(a) GDPR)</h3>
+            <p>Processing of your health data is based <strong>solely and exclusively on your explicit consent</strong> pursuant to <strong>Article 9(2)(a) GDPR</strong> (and Article 6(1)(a) GDPR). No other legal bases (such as legitimate interests or contractual necessity) are relied upon for processing your health data. You may withdraw your consent at any time without detriment, which immediately and permanently erases all data from this device.</p>
+
+            <h3>3. Data Retention Criteria</h3>
+            <p>Your health data is retained strictly according to the following criteria:</p>
+            <ul>
+              <li><strong>Local Device Retention:</strong> Data remains stored in your browser's <code>localStorage</code> for as long as you actively use the application, until you explicitly delete logs, execute <strong>Clear all data</strong>, or <strong>withdraw consent</strong>.</li>
+              <li><strong>Zero Server Retention:</strong> <strong>0 seconds / None.</strong> Cadence is an offline client-side application. No health records, metrics, or personal identifiers are ever uploaded, transmitted, or retained on any external server or cloud database.</li>
+              <li><strong>Manual Backups:</strong> JSON export files remain stored in your personal local filesystem under your direct custody for as long as you retain the downloaded file.</li>
+            </ul>
+
+            <h3>4. Third-Party Processors &amp; CDN Asset Disclosure</h3>
+            <p>Cadence operates client-side, but retrieves static libraries and model weights from trusted Content Delivery Networks (CDNs) on initial page load:</p>
+            <ul>
+              <li><strong>Google Fonts (Google LLC):</strong> Used to deliver interface typography (<code>fonts.googleapis.com</code> / <code>fonts.gstatic.com</code>). When requesting font stylesheets and font files, your browser transmits standard network connection metadata (IP address and User-Agent) to Google's CDN. No health data or personal inputs are ever shared with or accessible to Google Fonts.</li>
+              <li><strong>MediaPipe &amp; jsDelivr CDN (Prospect One / Cloudflare):</strong> Delivers client-side computer vision scripts and WebAssembly AI model files (<code>cdn.jsdelivr.net</code>) for local movement analysis. All pose and hand tracking runs <strong>100% locally on your device GPU and memory</strong>. Camera video streams and joint coordinates never leave your device.</li>
+            </ul>
+
+            <h3>5. Where &amp; How Data is Stored</h3>
+            <p>All records are stored exclusively in your browser's sandboxed <strong>localStorage</strong> on this device. No data is shared with or sold to advertisers, insurers, or data brokers.</p>
+
+            <h3>6. Your Rights under GDPR (Articles 15–22)</h3>
+            <ul>
+              <li><strong>Right of Access (Art. 15):</strong> Export and inspect your complete health dataset anytime via the footer or settings.</li>
+              <li><strong>Right to Rectification (Art. 16):</strong> Directly edit or modify any log entry.</li>
+              <li><strong>Right to Erasure (Art. 17):</strong> Permanently delete specific entries, clear all data, or wipe local storage.</li>
+              <li><strong>Right to Data Portability (Art. 20):</strong> Export your health data in structured, machine-readable JSON format.</li>
+              <li><strong>Right to Withdraw Consent (Art. 7(3)):</strong> Withdraw consent at any time via the footer to instantly revoke authorization and wipe all data.</li>
+            </ul>
+
+            <h3>7. Data Protection &amp; Inquiries</h3>
+            <p>Because Cadence functions as a zero-telemetry local-first client where you retain exclusive custody of your data, no external data controller processing exists. For any privacy queries, contact <strong>cadence@app.local</strong>.</p>
+
+            <h3>8. Age Requirement</h3>
+            <p>You must be <strong>16 years of age or older</strong> to provide valid consent under GDPR Art. 8. If you are under 16, please do not use this application without verified parental/guardian authorization.</p>
           </div>
           <div class="consentrow">
             <input type="checkbox" id="consentCheck">
-            <label for="consentCheck">I am <strong>16 or older</strong>, have read the notice above, and <strong>consent</strong> to Cadence processing my health data (medications, symptoms, gait, sleep, and other personal health information) on this device for personal health tracking. I understand my data is stored <strong>only locally</strong> and may be deleted or exported anytime under my <strong>GDPR rights</strong>.</label>
+            <label for="consentCheck">I am <strong>16 or older</strong>, have read the notice above, and grant my <strong>explicit consent</strong> under <strong>Art. 9(2)(a) GDPR</strong> for Cadence to process my health data (medications, symptoms, gait, sleep, and physical activities) locally on this device. I understand that processing is based solely on my consent, that I can export or erase my data anytime, and that third-party CDNs (Google Fonts, jsDelivr/MediaPipe) only deliver static assets without receiving any health data.</label>
           </div>
           <div class="gateactions">
             <button class="btn primary" id="consentContinueBtn" disabled>Begin my day with Cadence →</button>
@@ -295,9 +326,10 @@ window.Cadence = window.Cadence || {};
         <div class="modal-card">
           <h2 id="viewEntryTitle">View entry</h2>
           <div id="viewEntryContent"></div>
-          <div class="modal-actions">
-            <button class="btn primary" id="saveEditBtn">Save changes</button>
-            <button class="btn" id="closeViewModal">Close</button>
+          <div class="modal-actions edit-modal-actions" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;width:100%;margin-top:30px;">
+            <button type="button" class="btn" id="deleteEntryBtn" style="color:#DC2626;border-color:rgba(220,38,38,0.5);background:rgba(220,38,38,0.09);font-weight:700;justify-content:center;width:100%;">🗑️ Delete log</button>
+            <button type="button" class="btn success" id="saveEditBtn" style="background:#16A34A !important;border-color:#15803D !important;color:#FFFFFF !important;font-weight:700;justify-content:center;width:100%;">💾 Save changes</button>
+            <button type="button" class="btn" id="closeViewModal" style="justify-content:center;width:100%;">Cancel</button>
           </div>
         </div>
       </div>
@@ -418,6 +450,125 @@ window.Cadence = window.Cadence || {};
     `;
   }
 
+  function getPreviousEntriesModalTemplate() {
+    return `
+      <div class="modal-overlay hidden" id="prevEntriesModal" role="dialog" aria-modal="true" aria-labelledby="histModalTitle">
+        <div class="modal-card wide" style="max-width:1040px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;border-bottom:2px solid var(--line);padding-bottom:14px;">
+            <div>
+              <h2 id="histModalTitle" style="margin:0 0 4px 0;font-size:1.8rem;">📅 Previous Entries &amp; Past Rhythms</h2>
+              <p style="margin:0;color:var(--ink-soft);font-size:0.95rem;">Select any previous date to inspect its 24-hour clock bubbles and recorded daily timeline.</p>
+            </div>
+            <span class="history-badge" id="historyEventCountBadge" style="font-size:0.95rem;padding:6px 16px;">0 events</span>
+          </div>
+
+          <!-- Interactive Date Navigator Bar -->
+          <div class="history-date-bar" style="background:var(--surface-2);padding:12px 18px;border-radius:14px;border:2px solid var(--line);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button type="button" class="btn-hist-nav" id="histPrevDayBtn" aria-label="Previous day" title="Previous Day">◀</button>
+              <div class="hist-date-picker-wrap">
+                <input type="date" id="histDatePicker" class="hist-date-input" aria-label="Select history date">
+                <span id="histSelectedDateLabel" class="hist-date-label" style="font-size:1.05rem;padding:8px 18px;">Yesterday</span>
+              </div>
+              <button type="button" class="btn-hist-nav" id="histNextDayBtn" aria-label="Next day" title="Next Day">▶</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button type="button" class="btn-hist-today" id="histYesterdayQuickBtn" style="padding:8px 18px;font-size:0.92rem;">Yesterday</button>
+            </div>
+          </div>
+
+          <!-- Modal History Grid -->
+          <div class="history-modal-grid">
+            <!-- Left Column: Historical Clock View -->
+            <div class="hist-modal-clock-col">
+              <div style="font-weight:800;font-size:1.15rem;margin-bottom:4px;text-align:center;">🕰️ 24-Hour Rhythm Clock</div>
+              <div class="hist-clock-wrapper" role="img" aria-label="Historical clock face for selected past date with activity bubbles">
+                <div class="hist-clock-face" id="histClockFace">
+                  <div class="hist-center-dot"></div>
+                </div>
+              </div>
+              <div class="hist-orbit-legend" style="font-size:0.82rem;margin-top:10px;">
+                <span>☀️ <strong>Day (6 AM – 6 PM):</strong> Inside rim</span> · <span>🌙 <strong>Night:</strong> Outside ring</span>
+              </div>
+            </div>
+
+            <!-- Right Column: Replicated Rhythm Grid & Event Details -->
+            <div class="hist-modal-rhythm-col">
+              <div class="hist-rhythm-header" style="margin-bottom:12px;">
+                <span style="font-size:1.15rem;font-weight:800;color:var(--ink);">🕒 Recorded Daily Rhythm</span>
+                <span id="histRhythmDateSub" style="font-weight:700;font-size:0.95rem;color:var(--primary-dark);"></span>
+              </div>
+              <div class="hist-day-ribbon" id="histDayRibbon" role="region" aria-label="Recorded historical timeline">
+                <!-- Generated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions" style="margin-top:24px;">
+            <button type="button" class="btn primary" id="closeHistoryModalBtn" style="justify-content:center;width:100%;">Done / Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function getPrivacyModalTemplate() {
+    return `
+      <div class="modal-overlay hidden" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
+        <div class="modal-card wide" style="max-width:780px;max-height:85vh;overflow-y:auto;">
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:16px;">
+            <h2 id="privacyModalTitle" style="margin:0;font-size:1.6rem;display:flex;align-items:center;gap:8px;">
+              <span>🔒</span> <span>GDPR Privacy &amp; Data Protection Notice</span>
+            </h2>
+            <button type="button" class="btn ghost" id="closePrivacyModalTopBtn" style="font-size:1.4rem;padding:2px 8px;line-height:1;">&times;</button>
+          </div>
+          
+          <div class="policytext" style="font-size:0.95rem;line-height:1.6;color:var(--ink);">
+            <div style="background:rgba(34,197,94,0.1);border:1.5px solid #22c55e;border-radius:12px;padding:12px 16px;margin-bottom:16px;">
+              <strong style="color:#15803d;">🛡️ Zero-Server Telemetry:</strong> Cadence is engineered as a local-first application. Your health entries, camera feeds, and voice memos never leave this device.
+            </div>
+
+            <h3 style="font-size:1.15rem;font-weight:800;color:var(--ink);margin:14px 0 6px;">1. Special Category Health Data Processed</h3>
+            <p>Cadence processes personal health data including medication schedules, actual intake/skip timestamps, motor and non-motor symptom logs, gait and freezing events, sleep quality scores, meal and beverage logs, physical rehabilitation scores, voice memos, and photos under <strong>Article 9(1) of the UK/EU GDPR</strong>.</p>
+
+            <h3 style="font-size:1.15rem;font-weight:800;color:var(--ink);margin:14px 0 6px;">2. Exclusive Legal Basis: Explicit Consent (Art. 9(2)(a) GDPR)</h3>
+            <p>Processing of your health data is carried out <strong>solely and exclusively on the basis of your explicit consent under Article 9(2)(a) GDPR</strong> (in conjunction with Article 6(1)(a) GDPR). No other legal basis is used. Consent is voluntary and can be withdrawn at any time through the application interface.</p>
+
+            <h3 style="font-size:1.15rem;font-weight:800;color:var(--ink);margin:14px 0 6px;">3. Data Retention Criteria</h3>
+            <ul>
+              <li><strong>Local Storage Duration:</strong> Your data is retained indefinitely in your browser's local <code>localStorage</code> database for as long as you use the application, until you explicitly choose to clear individual logs, clear all data, or withdraw consent.</li>
+              <li><strong>External Servers:</strong> <strong>0 seconds.</strong> No data is ever transmitted to or retained on cloud servers, external databases, or third-party tracking services.</li>
+              <li><strong>Export Backups:</strong> Manual JSON exports are saved directly to your local file system and retained in accordance with your personal storage preferences.</li>
+            </ul>
+
+            <h3 style="font-size:1.15rem;font-weight:800;color:var(--ink);margin:14px 0 6px;">4. Third-Party Processors &amp; CDN Asset Disclosure</h3>
+            <p>Cadence uses two trusted Content Delivery Networks (CDNs) strictly to download static code libraries and typography during browser load:</p>
+            <ul>
+              <li><strong>Google Fonts (Google LLC):</strong> Used to load system typography (<code>fonts.googleapis.com</code> / <code>fonts.gstatic.com</code>). Standard HTTP transmission metadata (IP address, browser User-Agent) is processed by Google to serve font files. <em>No health data or user entries are ever accessible to or shared with Google Fonts.</em></li>
+              <li><strong>MediaPipe / jsDelivr CDN (Prospect One / Cloudflare):</strong> Delivers client-side computer vision scripts and WebAssembly AI model files (<code>cdn.jsdelivr.net</code>). All motion tracking, pose landmark calculations, and video frame analysis run <strong>100% locally on your device GPU/CPU</strong>. Camera frames and joint coordinates are never transmitted over the network.</li>
+            </ul>
+
+            <h3 style="font-size:1.15rem;font-weight:800;color:var(--ink);margin:14px 0 6px;">5. Your Rights Under GDPR (Articles 15–22)</h3>
+            <ul>
+              <li><strong>Access (Art. 15):</strong> Export your full dataset at any time as structured JSON.</li>
+              <li><strong>Rectification (Art. 16):</strong> Directly edit or modify any log entry.</li>
+              <li><strong>Erasure / Right to be Forgotten (Art. 17):</strong> Delete individual logs or click "Clear all data" in the footer.</li>
+              <li><strong>Data Portability (Art. 20):</strong> Download and transfer your JSON data to any other device or healthcare provider.</li>
+              <li><strong>Right to Withdraw Consent (Art. 7(3)):</strong> Click "Withdraw consent" in the footer to instantly revoke authorization and permanently delete all stored health data.</li>
+            </ul>
+
+            <h3 style="font-size:1.15rem;font-weight:800;color:var(--ink);margin:14px 0 6px;">6. Contact &amp; Inquiries</h3>
+            <p>For any privacy or data protection inquiries, contact <strong>cadence@app.local</strong>.</p>
+          </div>
+
+          <div class="modal-actions" style="margin-top:20px;">
+            <button type="button" class="btn primary" id="closePrivacyModalBtn" style="justify-content:center;width:100%;">Close Privacy Notice</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   window.Cadence.templates = {
     getFullscreenGameOverlayTemplate,
     getConsentGateTemplate,
@@ -430,6 +581,8 @@ window.Cadence = window.Cadence || {};
     getViewEntryModalTemplate,
     getMedicalIdModalTemplate,
     getDoctorModalTemplate,
-    getPopupsAndNudgesTemplate
+    getPopupsAndNudgesTemplate,
+    getPreviousEntriesModalTemplate,
+    getPrivacyModalTemplate
   };
 })();

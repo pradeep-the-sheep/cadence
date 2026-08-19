@@ -231,7 +231,7 @@ window.Cadence = window.Cadence || {};
 
     stopVoiceSession();
 
-    const modeLabels = { sustained: 'Sustained Ahhh', counting: 'Loud Counting', phrases: 'Phrases' };
+    const modeLabels = { sustained: 'Sustained Ahhh', counting: 'Loud Counting', phrases: 'Phrases', pataka: 'Pa-Ta-Ka Diadochokinesis' };
     const { uid, todayStr, nowHM } = getHelpers();
     const state = getState();
 
@@ -429,7 +429,8 @@ window.Cadence = window.Cadence || {};
       const modeDescs = {
         sustained: 'Hold a loud, steady "Ahhh" sound. 10 seconds on, 3 seconds rest. 5 reps.',
         counting: 'Count from 1 to 10, saying each number loudly and clearly.',
-        phrases: 'Read each phrase aloud, projecting your voice across the room.'
+        phrases: 'Read each phrase aloud, projecting your voice across the room.',
+        pataka: 'Rapid articulation: "PA-PA-PA", "TA-TA-TA", "KA-KA-KA", and "PA-TA-KA" in rhythm.'
       };
       promptEl.innerHTML = '<span style="color:var(--ink-soft);">' + (modeDescs[fgVoiceMode] || 'Select a mode and press Start.') + '</span>';
       return;
@@ -456,6 +457,17 @@ window.Cadence = window.Cadence || {};
       const elapsed = 45 - fgVoiceTimeRemaining;
       const idx = Math.min(fgVoicePhrases.length - 1, Math.floor(elapsed / 5));
       promptEl.innerHTML = '<span style="font-size:1.3rem;font-weight:600;line-height:1.5;">"' + fgVoicePhrases[idx] + '"</span><br><span style="color:var(--ink-soft);">Say this phrase LOUDLY and clearly!</span>';
+    } else if (fgVoiceMode === 'pataka') {
+      const elapsed = 45 - fgVoiceTimeRemaining;
+      if (elapsed < 10) {
+        promptEl.innerHTML = '<span style="font-size:2.2rem;font-weight:900;color:#38bdf8;">PA — PA — PA — PA</span><br><span style="color:var(--ink-soft);">Phase 1: Lip Closure &amp; Strength</span>';
+      } else if (elapsed < 20) {
+        promptEl.innerHTML = '<span style="font-size:2.2rem;font-weight:900;color:#22c55e;">TA — TA — TA — TA</span><br><span style="color:var(--ink-soft);">Phase 2: Tongue Tip Agility</span>';
+      } else if (elapsed < 30) {
+        promptEl.innerHTML = '<span style="font-size:2.2rem;font-weight:900;color:#eab308;">KA — KA — KA — KA</span><br><span style="color:var(--ink-soft);">Phase 3: Back of Tongue Control</span>';
+      } else {
+        promptEl.innerHTML = '<span style="font-size:2.2rem;font-weight:900;color:#f43f5e;">PA — TA — KA — PA — TA — KA</span><br><span style="color:var(--ink-soft);">Phase 4: Full Sequential Agility</span>';
+      }
     }
   }
 
@@ -465,7 +477,7 @@ window.Cadence = window.Cadence || {};
     document.querySelectorAll('.fg-voice-mode').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.mode === mode);
     });
-    const times = { sustained: 60, counting: 30, phrases: 45 };
+    const times = { sustained: 60, counting: 30, phrases: 45, pataka: 45 };
     fgVoiceTimeRemaining = times[mode] || 45;
     const timerEl = document.getElementById('fg-voice-val-timer');
     if (timerEl) timerEl.textContent = fgVoiceTimeRemaining + 's';

@@ -79,10 +79,14 @@ window.Cadence = window.Cadence || {};
     const state = getState();
     const { todayStr, getPastDateString } = getHelpers();
     const today = todayStr();
+    if (typeof state.rhythmStreak !== 'number' || isNaN(state.rhythmStreak) || state.rhythmStreak < 0) {
+      state.rhythmStreak = 0;
+    }
     if (state.lastActiveDate === today) return;
     const yesterday = getPastDateString(1);
-    if (state.lastActiveDate === yesterday) state.rhythmStreak = (state.rhythmStreak || 0) + 1;
+    if (state.lastActiveDate === yesterday) state.rhythmStreak = Math.max(1, (state.rhythmStreak || 0) + 1);
     else state.rhythmStreak = 1;
+    if (state.rhythmStreak < 0) state.rhythmStreak = 0;
     state.lastActiveDate = today;
     saveState();
     const el = document.getElementById('rhythmStreak');

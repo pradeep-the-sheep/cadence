@@ -265,6 +265,14 @@ window.Cadence = window.Cadence || {};
       fgTimeRemaining = 30;
       const hint = document.getElementById('fg-big-hint');
       if (hint) hint.textContent = 'Face camera; twist so shoulders turn clearly';
+    } else if (mode === 'clock') {
+      if (exName) exName.textContent = "🎯 Clock Sway & Reach (BIG)";
+      if (exDesc) exDesc.textContent = "MediaPipe tracks torso & arm reaches across the clock face. Perform seated in a chair or standing!";
+      if (lbl1) lbl1.textContent = "Big Reaches"; if (val1) val1.textContent = "0";
+      if (lbl2) lbl2.textContent = "Time Left"; if (val2) val2.textContent = "30s";
+      fgTimeRemaining = 30;
+      const hint = document.getElementById('fg-big-hint');
+      if (hint) hint.textContent = 'Reach arms & sway torso (seated or standing)';
     }
   }
 
@@ -510,23 +518,33 @@ window.Cadence = window.Cadence || {};
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const nowMs = performance.now();
       
-      const isBig = ['reach', 'march', 'twist'].includes(fgSelectedExercise);
+      const isBig = ['reach', 'march', 'twist', 'clock'].includes(fgSelectedExercise);
+      const dotEl = document.getElementById('fg-detection-dot');
+      const textEl = document.getElementById('fg-detection-text');
 
       if (isBig && fgPoseLandmarker) {
         const poseResults = fgPoseLandmarker.detectForVideo(video, nowMs);
         if (poseResults && poseResults.landmarks && poseResults.landmarks.length > 0) {
           const pose = poseResults.landmarks[0];
+          if (dotEl) dotEl.style.background = '#22c55e';
+          if (textEl) textEl.textContent = '🟢 Body Pose Detected · Ready!';
           drawFgPoseSkeleton(ctx, canvas, pose);
           if (fgGameState === 'playing') {
             if (fgSelectedExercise === 'reach') processFgReach(pose);
             else if (fgSelectedExercise === 'march') processFgMarch(pose);
             else if (fgSelectedExercise === 'twist') processFgTwist(pose);
+            else if (fgSelectedExercise === 'clock') processFgReach(pose);
           }
+        } else {
+          if (dotEl) dotEl.style.background = '#eab308';
+          if (textEl) textEl.textContent = '⚪ Step back so upper body is in frame';
         }
       } else if (!isBig && fgHandLandmarker) {
         const results = fgHandLandmarker.detectForVideo(video, nowMs);
         if (results && results.landmarks && results.landmarks.length > 0) {
           const landmarks = results.landmarks[0];
+          if (dotEl) dotEl.style.background = '#22c55e';
+          if (textEl) textEl.textContent = '🟢 Hand Detected · Ready!';
           const wrist = landmarks[0];
           const middleMCP = landmarks[9];
           const currentScale = Math.sqrt(
@@ -545,6 +563,9 @@ window.Cadence = window.Cadence || {};
             else if (fgSelectedExercise === 'pop') processFgPop(ctx, canvas, landmarks);
             else if (fgSelectedExercise === 'fist') processFgFist(landmarks);
           }
+        } else {
+          if (dotEl) dotEl.style.background = '#eab308';
+          if (textEl) textEl.textContent = '⚪ Show your hand clearly to camera';
         }
       }
     }
@@ -996,6 +1017,7 @@ window.Cadence = window.Cadence || {};
     document.getElementById('fg-card-reach')?.addEventListener('click', () => setFingerGymExercise('reach'));
     document.getElementById('fg-card-march')?.addEventListener('click', () => setFingerGymExercise('march'));
     document.getElementById('fg-card-twist')?.addEventListener('click', () => setFingerGymExercise('twist'));
+    document.getElementById('fg-card-clock')?.addEventListener('click', () => setFingerGymExercise('clock'));
 
     document.getElementById('fg-btn-start')?.addEventListener('click', startFingerGymSession);
     document.getElementById('fg-btn-stop')?.addEventListener('click', stopFingerGymSession);

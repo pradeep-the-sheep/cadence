@@ -19,6 +19,33 @@ window.Cadence = window.Cadence || {};
     toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
   }
 
+  function showUndoToast(msg, undoFn, duration = 5000) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    clearTimeout(toastTimer);
+    t.innerHTML = `<span>${msg}</span> <button type="button" class="toast-undo-btn" id="toastUndoBtn" style="margin-left:12px;background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.5);border-radius:999px;padding:4px 12px;color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">↩️ Undo</button>`;
+    t.classList.add('show');
+    const sr = document.getElementById('srAnnounce');
+    if (sr) sr.textContent = msg;
+
+    const undoBtn = document.getElementById('toastUndoBtn');
+    if (undoBtn && typeof undoFn === 'function') {
+      undoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearTimeout(toastTimer);
+        t.classList.remove('show');
+        try {
+          undoFn();
+          showToast('Action undone ↩️');
+        } catch (err) {
+          console.warn("Undo error:", err);
+        }
+      });
+    }
+
+    toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+  }
+
   function openModal(id) {
     const modal = document.getElementById(id);
     if (!modal) return;
@@ -49,6 +76,8 @@ window.Cadence = window.Cadence || {};
       ${Templates.getMedicalIdModalTemplate()}
       ${Templates.getDoctorModalTemplate()}
       ${Templates.getPopupsAndNudgesTemplate()}
+      ${Templates.getPreviousEntriesModalTemplate()}
+      ${Templates.getPrivacyModalTemplate()}
     `;
     container.appendChild(modalHolder);
 
@@ -154,6 +183,7 @@ window.Cadence = window.Cadence || {};
 
   window.Cadence.modalManager = {
     showToast,
+    showUndoToast,
     openModal,
     closeModal,
     injectAllModals,

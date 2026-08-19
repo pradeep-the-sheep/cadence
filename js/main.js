@@ -96,17 +96,20 @@ window.Cadence = window.Cadence || {};
     const tabAnalytics = document.getElementById('tabAnalytics');
     const tabFingerGym = document.getElementById('tabFingerGym');
     const tabVoiceTherapy = document.getElementById('tabVoiceTherapy');
+    const tabSettings = document.getElementById('tabSettings');
+    const btnHeaderSettings = document.getElementById('btnHeaderSettings');
 
     const dashboardPanel = document.getElementById('dashboardPanel');
     const analyticsPanel = document.getElementById('analyticsPanel');
     const fingerGymPanel = document.getElementById('fingerGymPanel');
     const voiceTherapyPanel = document.getElementById('voiceTherapyPanel');
+    const settingsPanel = document.getElementById('settingsPanel');
 
     function switchTab(tabId) {
-      [tabDashboard, tabAnalytics, tabFingerGym, tabVoiceTherapy].forEach(t => {
+      [tabDashboard, tabAnalytics, tabFingerGym, tabVoiceTherapy, tabSettings].forEach(t => {
         if (t) t.setAttribute('aria-selected', 'false');
       });
-      [dashboardPanel, analyticsPanel, fingerGymPanel, voiceTherapyPanel].forEach(p => {
+      [dashboardPanel, analyticsPanel, fingerGymPanel, voiceTherapyPanel, settingsPanel].forEach(p => {
         if (p) p.classList.add('hidden');
       });
 
@@ -131,6 +134,10 @@ window.Cadence = window.Cadence || {};
         tabVoiceTherapy?.setAttribute('aria-selected', 'true');
         voiceTherapyPanel?.classList.remove('hidden');
         getVoice().renderVoiceHistory();
+      } else if (tabId === 'settings') {
+        tabSettings?.setAttribute('aria-selected', 'true');
+        settingsPanel?.classList.remove('hidden');
+        syncSettingsInputs();
       }
       getAudio().playSound('click');
     }
@@ -139,6 +146,8 @@ window.Cadence = window.Cadence || {};
     tabAnalytics?.addEventListener('click', () => switchTab('analytics'));
     tabFingerGym?.addEventListener('click', () => switchTab('fingerGym'));
     tabVoiceTherapy?.addEventListener('click', () => switchTab('voiceTherapy'));
+    tabSettings?.addEventListener('click', () => switchTab('settings'));
+    btnHeaderSettings?.addEventListener('click', () => switchTab('settings'));
   }
 
   function bindEventHandlers() {
@@ -357,7 +366,55 @@ window.Cadence = window.Cadence || {};
 
     // View/Edit Entry Modal
     document.getElementById('saveEditBtn')?.addEventListener('click', () => getUI().saveEditedEntry());
+    document.getElementById('deleteEntryBtn')?.addEventListener('click', () => getUI().deleteCurrentEntry());
     document.getElementById('closeViewModal')?.addEventListener('click', () => getModals().closeModal('viewEntryModal'));
+
+    // Past Day History Modal & Controls (Integrated into Top Time/Date Banner)
+    const handleOpenHistory = () => {
+      getAudio().playSound('click');
+      getModals().openModal('prevEntriesModal');
+      getUI().renderHistoryView();
+    };
+
+    document.addEventListener('click', e => {
+      const btn = e.target.closest('#openHistoryModalBtn, .btn-chrono-history, .btn-prev-entries');
+      if (btn) {
+        handleOpenHistory();
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const btn = e.target.closest('#openHistoryModalBtn, .btn-chrono-history, .btn-prev-entries');
+        if (btn) {
+          e.preventDefault();
+          handleOpenHistory();
+        }
+      }
+    });
+
+    document.getElementById('closeHistoryModalBtn')?.addEventListener('click', () => {
+      getModals().closeModal('prevEntriesModal');
+    });
+
+    document.getElementById('histPrevDayBtn')?.addEventListener('click', () => {
+      getAudio().playSound('click');
+      getUI().stepHistoryDate(-1);
+    });
+    document.getElementById('histNextDayBtn')?.addEventListener('click', () => {
+      getAudio().playSound('click');
+      getUI().stepHistoryDate(1);
+    });
+    document.getElementById('histDatePicker')?.addEventListener('change', function() {
+      if (this.value) {
+        getAudio().playSound('click');
+        getUI().setSelectedHistoryDate(this.value);
+      }
+    });
+    document.getElementById('histYesterdayQuickBtn')?.addEventListener('click', () => {
+      getAudio().playSound('click');
+      getUI().setSelectedHistoryDate(getHelpers().getPastDateString(1));
+    });
 
     // Clinical Summary & Medical ID
     document.getElementById('doctorReportBtn')?.addEventListener('click', () => {
@@ -410,7 +467,16 @@ window.Cadence = window.Cadence || {};
     });
 
     document.getElementById('openPrivacyLink')?.addEventListener('click', () => {
-      alert('📄 GDPR Privacy Notice\n\nCadence processes health data solely in your browser localStorage. No data is transmitted anywhere.\n\nLegal basis: Explicit consent (Art. 9(2)(a) GDPR).\nRetention: Until you delete or withdraw consent.\nYour rights: Access, rectification, erasure, portability, withdrawal.');
+      getModals().openModal('privacyModal');
+    });
+    document.getElementById('closePrivacyModalBtn')?.addEventListener('click', () => {
+      getModals().closeModal('privacyModal');
+    });
+    document.getElementById('closePrivacyModalTopBtn')?.addEventListener('click', () => {
+      getModals().closeModal('privacyModal');
+    });
+    document.getElementById('settingsPrivacyModalBtn')?.addEventListener('click', () => {
+      getModals().openModal('privacyModal');
     });
 
     // Habit Settings Editor
@@ -449,13 +515,105 @@ window.Cadence = window.Cadence || {};
     document.querySelectorAll('.fg-voice-mode').forEach(btn => {
       btn.addEventListener('click', () => getVoice().setVoiceMode(btn.dataset.mode));
     });
+
+    // Settings Panel Controls
+    document.getElementById('btnTestSound')?.addEventListener('click', () => {
+      getAudio().playSound('success');
+      getModals().showToast('🔔 Chime sound played!');
+    });
+
+    const metronomeSlider = document.getElementById('settingsMetronomeBpm');
+    const bpmDisplay = document.getElementById('settingsBpmDisplay');
+    if (metronomeSlider && bpmDisplay) {
+      metronomeSlider.addEventListener('input', () => {
+        bpmDisplay.textContent = metronomeSlider.value;
+      });
+    }
+
+    document.getElementById('btnSaveSettingsLimits')?.addEventListener('click', () => {
+      const state = getState();
+      const exerVal = parseInt(document.getElementById('settingsExerLimitInput')?.value || '3', 10);
+      const mealVal = parseInt(document.getElementById('settingsMealLimitInput')?.value || '3', 10);
+      state.exerciseTargetLimit = Math.max(1, Math.min(10, exerVal));
+      state.mealTargetLimit = Math.max(1, Math.min(10, mealVal));
+      saveState();
+      getHabits().syncHabitsWithActivityOrMeal('exercise');
+      getHabits().syncHabitsWithActivityOrMeal('meal');
+      getUI().renderAll();
+      getAudio().playSound('success');
+      getModals().showToast('✅ Daily goal limits saved!');
+    });
+
+    document.getElementById('settingsDoctorReportBtn')?.addEventListener('click', () => {
+      document.getElementById('doctorReportBtn')?.click();
+    });
+    document.getElementById('settingsMedicalIdBtn')?.addEventListener('click', () => {
+      document.getElementById('medicalIdBtn')?.click();
+    });
+    document.getElementById('settingsExportDataBtn')?.addEventListener('click', () => {
+      document.getElementById('exportDataBtn')?.click();
+    });
+    document.getElementById('settingsImportDataBtn')?.addEventListener('click', () => {
+      document.getElementById('importDataBtn')?.click();
+    });
+    document.getElementById('settingsDemoDataBtn')?.addEventListener('click', () => {
+      document.getElementById('generateDemoDataBtn')?.click();
+    });
+    document.getElementById('settingsClearDataBtn')?.addEventListener('click', () => {
+      document.getElementById('clearDataBtn')?.click();
+    });
+
+    // Global Keyboard Shortcuts for Quick Logging
+    document.addEventListener('keydown', (e) => {
+      // Escape to close any open modal
+      if (e.key === 'Escape') {
+        const openModal = document.querySelector('.modal-overlay:not(.hidden)');
+        if (openModal) {
+          getModals().closeModal(openModal.id);
+          e.preventDefault();
+          return;
+        }
+      }
+
+      if (e.ctrlKey || e.metaKey) {
+        const k = e.key.toLowerCase();
+        if (k === 's') {
+          e.preventDefault();
+          openSymptomModal();
+        } else if (k === 'm') {
+          e.preventDefault();
+          openActivityLog('food');
+        } else if (k === 'd') {
+          e.preventDefault();
+          openActivityLog('drink');
+        } else if (k === 'e') {
+          e.preventDefault();
+          openActivityLog('exercise');
+        } else if (k === 'g') {
+          e.preventDefault();
+          openGaitModal();
+        } else if (k === 'k') {
+          e.preventDefault();
+          document.getElementById('openMedModalBtn')?.click();
+        }
+      }
+    });
+  }
+
+  function syncSettingsInputs() {
+    const state = getState();
+    const exerInput = document.getElementById('settingsExerLimitInput');
+    const mealInput = document.getElementById('settingsMealLimitInput');
+    if (exerInput) exerInput.value = state.exerciseTargetLimit || 3;
+    if (mealInput) mealInput.value = state.mealTargetLimit || 3;
   }
 
   function logMotorState(stateName) {
     const state = getState();
     const { uid, nowHM, todayStr } = getHelpers();
+    const logId = uid();
     state.onOffLogs.unshift({
-      id: uid(),
+      id: logId,
       state: stateName,
       time: nowHM(),
       date: todayStr()
@@ -464,7 +622,12 @@ window.Cadence = window.Cadence || {};
     getUI().renderAll();
     getHabits().bumpRhythmStreak();
     getAudio().playSound('success');
-    getModals().showToast(`Motor state logged: ${stateName}`);
+    getModals().showUndoToast(`Motor state logged: ${stateName}`, () => {
+      const s = getState();
+      s.onOffLogs = (s.onOffLogs || []).filter(x => x.id !== logId);
+      saveState();
+      getUI().renderAll();
+    });
   }
 
   function openSymptomModal() {
@@ -500,37 +663,51 @@ window.Cadence = window.Cadence || {};
   }
 
   function handleSaveSymptoms() {
-    const state = getState();
-    const { uid, nowHM, todayStr } = getHelpers();
-    const names = [...selectedSymptoms];
-    const other = document.getElementById('sxOtherInput').value.trim();
-    if (other) names.push(other);
-    if (!names.length) {
-      alert('Please select at least one symptom.');
-      return;
-    }
-    const time = document.getElementById('sxTime').value || nowHM();
-    const notes = document.getElementById('sxNotes').value.trim();
+    const btn = document.getElementById('addSxBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+    try {
+      const state = getState();
+      const { uid, nowHM, todayStr } = getHelpers();
+      const names = [...selectedSymptoms];
+      const other = document.getElementById('sxOtherInput').value.trim();
+      if (other) names.push(other);
+      if (!names.length) {
+        alert('Please select at least one symptom.');
+        return;
+      }
+      const time = document.getElementById('sxTime').value || nowHM();
+      const notes = document.getElementById('sxNotes').value.trim();
+      const newIds = [];
 
-    names.forEach(name => {
-      state.symptoms.unshift({
-        id: uid(),
-        name,
-        time,
-        date: todayStr(),
-        severity: selectedSev,
-        notes,
-        bodyLocation: selectedBody.join(', '),
-        voiceMemo: sxVoiceData || '',
-        photo: sxPhotoData || ''
+      names.forEach(name => {
+        const id = uid();
+        newIds.push(id);
+        state.symptoms.unshift({
+          id,
+          name,
+          time,
+          date: todayStr(),
+          severity: selectedSev,
+          notes,
+          bodyLocation: selectedBody.join(', '),
+          voiceMemo: sxVoiceData || '',
+          photo: sxPhotoData || ''
+        });
       });
-    });
 
-    saveState();
-    getModals().closeModal('sxModal');
-    getUI().renderAll();
-    getAudio().playSound('success');
-    getModals().showToast('Symptom logged!');
+      saveState();
+      getModals().closeModal('sxModal');
+      getUI().renderAll();
+      getAudio().playSound('success');
+      getModals().showUndoToast('Symptom logged!', () => {
+        const s = getState();
+        s.symptoms = (s.symptoms || []).filter(x => !newIds.includes(x.id));
+        saveState();
+        getUI().renderAll();
+      });
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Save symptoms'; }
+    }
   }
 
   function openActivityLog(type) {
@@ -566,44 +743,56 @@ window.Cadence = window.Cadence || {};
   }
 
   function handleSaveLog() {
-    const state = getState();
-    const { uid, nowHM, todayStr } = getHelpers();
-    const type = document.getElementById('logType').value;
-    const time = document.getElementById('logTime').value || nowHM();
-    const notes = document.getElementById('logNotes').value.trim();
-    let detail = '';
+    const btn = document.getElementById('addLogBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+    try {
+      const state = getState();
+      const { uid, nowHM, todayStr } = getHelpers();
+      const type = document.getElementById('logType').value;
+      const time = document.getElementById('logTime').value || nowHM();
+      const notes = document.getElementById('logNotes').value.trim();
+      let detail = '';
 
-    if (type === 'meal') {
-      if (!selectedMealType) { alert('Select a meal type.'); return; }
-      detail = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
-    } else if (type === 'drink') {
-      if (!selectedDrinkType) { alert('Select a drink type.'); return; }
-      detail = selectedDrinkType.charAt(0).toUpperCase() + selectedDrinkType.slice(1);
-    } else {
-      detail = document.getElementById('logDetail').value.trim();
-      if (!detail) { alert('Please describe what you did.'); return; }
+      if (type === 'meal') {
+        if (!selectedMealType) { alert('Select a meal type.'); return; }
+        detail = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
+      } else if (type === 'drink') {
+        if (!selectedDrinkType) { alert('Select a drink type.'); return; }
+        detail = selectedDrinkType.charAt(0).toUpperCase() + selectedDrinkType.slice(1);
+      } else {
+        detail = document.getElementById('logDetail').value.trim();
+        if (!detail) { alert('Please describe what you did.'); return; }
+      }
+
+      const opts = [...document.querySelectorAll('.log-option-chip.selected')].map(c => c.dataset.opt);
+      const logId = uid();
+      state.logs.unshift({
+        id: logId,
+        type,
+        detail,
+        time,
+        date: todayStr(),
+        notes,
+        voiceMemo: logVoiceData || '',
+        options: opts.length ? opts : undefined,
+        mealType: selectedMealType || undefined,
+        drinkType: selectedDrinkType || undefined
+      });
+
+      getHabits().syncHabitsWithActivityOrMeal(type, detail);
+      saveState();
+      getModals().closeModal('logModal');
+      getUI().renderAll();
+      getAudio().playSound('success');
+      getModals().showUndoToast(`${detail} logged!`, () => {
+        const s = getState();
+        s.logs = (s.logs || []).filter(x => x.id !== logId);
+        saveState();
+        getUI().renderAll();
+      });
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Save entry'; }
     }
-
-    const opts = [...document.querySelectorAll('.log-option-chip.selected')].map(c => c.dataset.opt);
-    state.logs.unshift({
-      id: uid(),
-      type,
-      detail,
-      time,
-      date: todayStr(),
-      notes,
-      voiceMemo: logVoiceData || '',
-      options: opts.length ? opts : undefined,
-      mealType: selectedMealType || undefined,
-      drinkType: selectedDrinkType || undefined
-    });
-
-    getHabits().syncHabitsWithActivityOrMeal(type, detail);
-    saveState();
-    getModals().closeModal('logModal');
-    getUI().renderAll();
-    getAudio().playSound('success');
-    getModals().showToast('Logged!');
   }
 
   function openSleepModal() {
@@ -624,23 +813,42 @@ window.Cadence = window.Cadence || {};
   }
 
   function handleSaveSleep() {
-    const state = getState();
-    const { uid, todayStr } = getHelpers();
-    const r = window._sleepRating || 0;
-    if (!r) { alert('Select a rating.'); return; }
-    const notes = document.getElementById('sleepNotes').value.trim();
-    const ex = (state.sleep || []).find(s => s.date === todayStr() && !s.dismissed);
-    if (ex) {
-      ex.rating = r;
-      ex.notes = notes;
-    } else {
-      state.sleep.unshift({ id: uid(), date: todayStr(), rating: r, notes });
+    const btn = document.getElementById('addSleepBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+    try {
+      const state = getState();
+      const { uid, todayStr } = getHelpers();
+      const r = window._sleepRating || 0;
+      if (!r) { alert('Select a rating.'); return; }
+      const notes = document.getElementById('sleepNotes').value.trim();
+      const exIndex = (state.sleep || []).findIndex(s => s.date === todayStr() && !s.dismissed);
+      const prevEntry = exIndex >= 0 ? { ...state.sleep[exIndex] } : null;
+      const sleepId = uid();
+
+      if (exIndex >= 0) {
+        state.sleep[exIndex].rating = r;
+        state.sleep[exIndex].notes = notes;
+      } else {
+        state.sleep.unshift({ id: sleepId, date: todayStr(), rating: r, notes });
+      }
+      saveState();
+      getModals().closeModal('sleepModal');
+      getUI().renderAll();
+      getAudio().playSound('success');
+      getModals().showUndoToast('Sleep rating saved!', () => {
+        const s = getState();
+        if (prevEntry) {
+          const idx = (s.sleep || []).findIndex(x => x.date === todayStr() && !x.dismissed);
+          if (idx >= 0) s.sleep[idx] = prevEntry;
+        } else {
+          s.sleep = (s.sleep || []).filter(x => x.id !== sleepId);
+        }
+        saveState();
+        getUI().renderAll();
+      });
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Save rating'; }
     }
-    saveState();
-    getModals().closeModal('sleepModal');
-    getUI().renderAll();
-    getAudio().playSound('success');
-    getModals().showToast('Sleep logged!');
   }
 
   function openGaitModal() {
@@ -658,50 +866,68 @@ window.Cadence = window.Cadence || {};
 
   function handleSaveGait() {
     if (!selectedGaitType) { alert('Select what happened.'); return; }
-    const state = getState();
-    const { uid, nowHM, todayStr } = getHelpers();
-    const location = document.getElementById('gaitLocation').value.trim();
-    const activity = document.getElementById('gaitActivity').value.trim();
-    const severity = Number(document.getElementById('gaitSeverity').value);
-    const time = document.getElementById('gaitTime').value || nowHM();
-    const notes = document.getElementById('gaitNotes').value.trim();
+    const btn = document.getElementById('addGaitBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+    try {
+      const state = getState();
+      const { uid, nowHM, todayStr } = getHelpers();
+      const location = document.getElementById('gaitLocation').value.trim();
+      const activity = document.getElementById('gaitActivity').value.trim();
+      const severity = Number(document.getElementById('gaitSeverity').value);
+      const time = document.getElementById('gaitTime').value || nowHM();
+      const notes = document.getElementById('gaitNotes').value.trim();
+      const gaitId = uid();
 
-    state.gait.unshift({
-      id: uid(),
-      type: selectedGaitType,
-      location,
-      activity,
-      severity,
-      time,
-      date: todayStr(),
-      notes
-    });
+      state.gait.unshift({
+        id: gaitId,
+        type: selectedGaitType,
+        location,
+        activity,
+        severity,
+        time,
+        date: todayStr(),
+        notes
+      });
 
-    getHabits().syncHabitsWithActivityOrMeal('gait', activity || selectedGaitType);
-    saveState();
-    getModals().closeModal('gaitModal');
-    getUI().renderAll();
-    getAudio().playSound('success');
-    getModals().showToast('Gait event logged!');
+      getHabits().syncHabitsWithActivityOrMeal('gait', activity || selectedGaitType);
+      saveState();
+      getModals().closeModal('gaitModal');
+      getUI().renderAll();
+      getAudio().playSound('success');
+      getModals().showUndoToast(`${selectedGaitType} logged!`, () => {
+        const s = getState();
+        s.gait = (s.gait || []).filter(x => x.id !== gaitId);
+        saveState();
+        getUI().renderAll();
+      });
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Save gait event'; }
+    }
   }
 
   function handleSaveMed() {
-    const state = getState();
-    const { uid } = getHelpers();
-    const n = document.getElementById('medName').value.trim();
-    const d = document.getElementById('medDose').value.trim();
-    const f = document.getElementById('medTime').value;
-    const i = parseFloat(document.getElementById('medInterval').value);
-    const c = parseInt(document.getElementById('medCount').value);
-    if (!n || !f || !i || !c) { alert('Fill all fields.'); return; }
+    const btn = document.getElementById('addMedBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+    try {
+      const state = getState();
+      const { uid } = getHelpers();
+      const n = document.getElementById('medName').value.trim();
+      const d = document.getElementById('medDose').value.trim();
+      const f = document.getElementById('medTime').value;
+      const i = parseFloat(document.getElementById('medInterval').value);
+      const c = parseInt(document.getElementById('medCount').value);
+      if (!n || !f || !i || !c) { alert('Fill all fields.'); return; }
 
-    const times = getMeds().genTimes(f, i, c);
-    state.meds.push({ id: uid(), name: n, dose: d, times, first: f, interval: i, count: c });
-    saveState();
-    getModals().closeModal('medModal');
-    getUI().renderAll();
-    getAudio().playSound('success');
-    getModals().showToast('Medication added!');
+      const times = getMeds().genTimes(f, i, c);
+      state.meds.push({ id: uid(), name: n, dose: d, times, first: f, interval: i, count: c });
+      saveState();
+      getModals().closeModal('medModal');
+      getUI().renderAll();
+      getAudio().playSound('success');
+      getModals().showToast('Medication saved!');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Save schedule'; }
+    }
   }
 
   function openMedicalIdModal() {

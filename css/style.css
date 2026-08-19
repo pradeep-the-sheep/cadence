@@ -152,6 +152,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .theme-group button:hover, .textsize-group button:hover { background: var(--surface-2); }
 .theme-group button[aria-pressed="true"]:hover { background: var(--primary-dark); }
+.btn-header-settings:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-dark) !important;
+  transform: translateY(-1px);
+}
 
 .main-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 10px;
@@ -208,42 +214,195 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .card h2 { margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
 
 .clock-datetime-banner {
-  font-family: 'Parkinsans', sans-serif;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--ink);
-  background: var(--surface);
-  border: 2.5px solid var(--primary);
-  border-radius: 14px;
-  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), var(--surface-2));
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 10px 16px;
   margin: 0 0 10px 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+body.theme-dark .clock-datetime-banner {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.85));
+  border-color: rgba(96, 165, 250, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-sepia .clock-datetime-banner {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.8), rgba(245, 235, 220, 0.9));
+  border-color: rgba(217, 119, 6, 0.35);
+}
+
+.chrono-date-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+.chrono-day-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   flex-wrap: wrap;
-  box-shadow: var(--shadow-sm);
-  text-align: center;
 }
-.clock-datetime-banner .clock-day-text {
-  color: var(--primary-dark);
-  font-weight: 800;
+.chrono-cal-dot {
   font-size: 1.15rem;
+  line-height: 1;
 }
-.clock-datetime-banner .clock-time-sep {
-  color: var(--ink-soft);
-  opacity: 0.6;
-  font-size: 1.15rem;
-}
-.clock-datetime-banner .clock-time-text {
+.chrono-day-name {
+  font-size: 1.18rem;
+  font-weight: 900;
   color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.chrono-period-badge {
+  font-size: 0.74rem;
   font-weight: 800;
-  font-size: 1.25rem;
-  font-variant-numeric: tabular-nums;
+  padding: 2px 9px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+.chrono-period-badge.morning {
+  background: rgba(234, 179, 8, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+.chrono-period-badge.afternoon {
+  background: rgba(14, 165, 233, 0.15);
+  color: #0369a1;
+  border: 1px solid rgba(14, 165, 233, 0.4);
+}
+.chrono-period-badge.evening {
+  background: rgba(249, 115, 22, 0.15);
+  color: #c2410c;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+}
+.chrono-period-badge.night {
+  background: rgba(139, 92, 246, 0.15);
+  color: #6d28d9;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+}
+body.theme-dark .chrono-period-badge.morning { color: #fde047; border-color: rgba(253, 224, 71, 0.4); }
+body.theme-dark .chrono-period-badge.afternoon { color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); }
+body.theme-dark .chrono-period-badge.evening { color: #fb923c; border-color: rgba(251, 146, 60, 0.4); }
+body.theme-dark .chrono-period-badge.night { color: #c084fc; border-color: rgba(192, 132, 252, 0.4); }
+
+.chrono-date-sub-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+.chrono-date-sub {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.btn-chrono-history {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: var(--surface-2);
-  padding: 3px 10px;
-  border-radius: 6px;
-  border: 1.5px solid var(--line);
+  border: 1.8px solid var(--primary);
+  color: var(--primary-dark);
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.25;
+  box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.06);
+}
+.btn-chrono-history:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+.btn-chrono-history:active {
+  transform: scale(0.96);
+}
+body.theme-dark .btn-chrono-history {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+body.theme-dark .btn-chrono-history:hover {
+  background: rgba(14, 165, 233, 0.25);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+body.theme-sepia .btn-chrono-history {
+  background: rgba(245, 235, 220, 0.9);
+  border-color: #d97706;
+  color: #b45309;
+}
+
+.chrono-time-side {
+  display: flex;
+  align-items: center;
+}
+.chrono-digits-wrap {
+  display: flex;
+  align-items: baseline;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  padding: 5px 12px;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.04);
+}
+body.theme-dark .chrono-digits-wrap {
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(255,255,255,0.15);
+}
+.chrono-hours-mins {
+  font-size: 1.38rem;
+  font-weight: 900;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+body.theme-dark .chrono-hours-mins {
+  color: #38bdf8;
+}
+.chrono-seconds {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  margin-left: 1px;
+  opacity: 0.85;
+}
+.chrono-ampm {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--ink-soft);
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 480px) {
+  .clock-datetime-banner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+  .chrono-date-side {
+    align-items: center;
+  }
 }
 
 .clock-section {
@@ -251,28 +410,34 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: 6px 10px 8px 10px;
-  margin: 0 0 4px 0;
+  padding: 4px 0 2px 0;
+  margin: 0 auto;
+  position: relative;
 }
 .clock-wrapper {
   position: relative;
-  width: 460px;
-  height: 460px;
-  margin: 10px auto 14px auto;
+  width: 480px;
+  height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px auto;
 }
-@media (max-width: 540px) {
-  .clock-section { padding: 4px 0 8px 0; margin: 0 0 4px 0; }
-  .clock-wrapper { width: 340px; height: 340px; transform: scale(0.80); margin: -18px auto; }
+@media (max-width: 580px) {
+  .clock-section { padding: 4px 0; margin: 0 auto; }
+  .clock-wrapper { width: 480px; height: 480px; transform: scale(0.68); margin: -55px auto; transform-origin: center center; }
+  .clock-orbit-legend { margin-top: -24px !important; font-size: 0.72rem !important; }
+  .dose-clock { margin-top: 14px !important; padding: 14px 16px !important; }
 }
 .clock-face {
-  width: 100%; height: 100%; border-radius: 50%;
-  background: var(--surface-2); border: 8px solid var(--primary);
+  width: 370px; height: 370px; border-radius: 50%;
+  background: var(--surface-2); border: 7px solid var(--primary);
   position: relative; box-shadow: var(--shadow-md), inset 0 2px 14px rgba(0,0,0,.08);
 }
 .orbit-ring.pm-orbit {
   position: absolute;
-  width: 524px;
-  height: 524px;
+  width: 460px;
+  height: 460px;
   border-radius: 50%;
   border: 1.5px dashed var(--line, rgba(0,0,0,0.18));
   left: 50%;
@@ -284,40 +449,65 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .clock-face .marker { position: absolute; left: 50%; border-radius: 4px; z-index: 2; }
 .clock-face .marker.minor {
-  width: 4.5px; height: 22px; top: 11px; background: var(--ink-faint);
-  transform-origin: 50% calc(230px - 11px);
+  width: 3.5px; height: 14px; top: 8px; background: var(--ink-faint);
+  transform-origin: 50% calc(185px - 8px);
 }
 .clock-face .marker.major {
-  width: 7px; height: 34px; top: 7px; background: var(--ink);
-  transform-origin: 50% calc(230px - 7px);
+  width: 5.5px; height: 20px; top: 5px; background: var(--ink);
+  transform-origin: 50% calc(185px - 5px);
+}
+.clock-num {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  font-family: 'Parkinsans', serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+  opacity: 0.85;
+}
+.clock-num.cardinal {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--primary-dark);
+  opacity: 1;
 }
 .clock-face .hand {
   position: absolute; left: 50%; bottom: 50%;
   transform-origin: 50% 100%; border-radius: 10px;
 }
 .clock-face .hand.second {
-  width: 4px; height: 180px; background: var(--accent);
-  margin-left: -2px; z-index: 3;
+  width: 3.5px; height: 145px; background: var(--accent);
+  margin-left: -1.75px; z-index: 3;
 }
 .clock-face .hand.minute {
-  width: 7px; height: 155px; background: var(--primary-dark);
-  margin-left: -3.5px; z-index: 2;
+  width: 6px; height: 125px; background: var(--primary-dark);
+  margin-left: -3px; z-index: 2;
 }
 .clock-face .hand.hour {
-  width: 10px; height: 110px; background: var(--primary);
-  margin-left: -5px; z-index: 2;
+  width: 8.5px; height: 90px; background: var(--primary);
+  margin-left: -4.25px; z-index: 2;
 }
 .clock-face .center-dot {
-  position: absolute; width: 24px; height: 24px;
+  position: absolute; width: 20px; height: 20px;
   background: var(--primary); border-radius: 50%;
   left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5;
-  border: 4px solid var(--surface-2);
+  border: 3.5px solid var(--surface-2);
 }
 .activity-dot {
-  position: absolute; width: 42px; height: 42px; border-radius: 50%;
-  border: 3px solid var(--primary); z-index: 6; cursor: pointer;
+  position: absolute; width: 38px; height: 38px; border-radius: 50%;
+  border: 2.5px solid var(--primary); z-index: 6; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.45rem; line-height: 1;
+  font-size: 1.35rem; line-height: 1;
   background: var(--surface);
   transition: transform .15s, box-shadow .15s;
   box-shadow: 0 4px 12px rgba(0,0,0,.25);
@@ -329,20 +519,21 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .activity-dot.dot-pm {
   box-shadow: 0 6px 16px rgba(0,0,0,.32);
 }
-.activity-dot:hover { transform: scale(1.45); box-shadow: 0 4px 20px rgba(0,0,0,.4); z-index: 8; }
-.activity-dot:active { transform: scale(1.2); }
+.activity-dot:hover { transform: scale(1.38); box-shadow: 0 4px 20px rgba(0,0,0,.4); z-index: 8; }
+.activity-dot:active { transform: scale(1.15); }
 .activity-dot:focus-visible { outline: 4px solid var(--primary); outline-offset: 5px; }
 
 .clock-orbit-legend {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-top: 4px;
-  font-size: 0.76rem;
+  gap: 14px;
+  margin-top: 8px;
+  margin-bottom: 2px;
+  font-size: 0.74rem;
   font-weight: 600;
   color: var(--ink-soft);
-  opacity: 0.85;
+  opacity: 0.8;
   flex-wrap: wrap;
 }
 .clock-orbit-legend span {
@@ -353,10 +544,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 .dose-clock {
   background: var(--surface-2);
-  border-radius: var(--radius-lg);
-  padding: 20px 24px;
-  margin: 18px 0 6px 0;
-  border: 2.5px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  margin: 10px 0 0 0;
+  border: 2px solid var(--line);
   text-align: center;
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
@@ -404,6 +595,425 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .dose-clock .progress-track .fill.ok { background: var(--success); }
 .dose-clock .progress-track .fill.warning { background: var(--warning); }
 .dose-clock .progress-track .fill.overdue { background: var(--alert); }
+
+/* Previous Entries Button in Day at a Glance */
+.btn-prev-entries {
+  margin-top: 14px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  min-height: 48px;
+  border: 2px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+.btn-prev-entries:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.btn-prev-entries:active {
+  transform: scale(0.98);
+}
+
+.history-modal-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
+  align-items: stretch;
+  min-height: 520px;
+}
+@media (max-width: 860px) {
+  .history-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+.hist-modal-clock-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 24px 16px;
+  border: 2px solid var(--line);
+  min-height: 520px;
+}
+.hist-modal-rhythm-col {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 22px 20px;
+  border: 2px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
+  height: 100%;
+}
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1.5px solid var(--line);
+  padding-bottom: 10px;
+}
+.history-title-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.history-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+.history-badge {
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--primary);
+}
+.history-date-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-hist-nav {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+.btn-hist-nav:hover:not(:disabled) {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  transform: scale(1.06);
+}
+.btn-hist-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.hist-date-picker-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.hist-date-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+.hist-date-label {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: border-color .15s, background .15s;
+}
+.hist-date-label:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+.btn-hist-today {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.btn-hist-today:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+.history-content-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (min-width: 620px) {
+  .history-content-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    align-items: center;
+    gap: 18px;
+  }
+}
+
+.hist-clock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.hist-clock-wrapper {
+  position: relative;
+  width: 330px;
+  height: 330px;
+  margin: 14px auto;
+}
+.hist-clock-face {
+  width: 330px;
+  height: 330px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 7px solid var(--primary);
+  position: relative;
+  box-shadow: var(--shadow-md), inset 0 2px 12px rgba(0,0,0,.08);
+}
+.hist-orbit-ring {
+  position: absolute;
+  width: 386px;
+  height: 386px;
+  border-radius: 50%;
+  border: 2px dashed var(--line);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.85;
+}
+.hist-clock-face .hist-marker {
+  position: absolute;
+  left: 50%;
+  border-radius: 3px;
+  z-index: 2;
+}
+.hist-clock-face .hist-marker.minor {
+  width: 3px;
+  height: 12px;
+  top: 6px;
+  background: var(--ink-faint);
+  transform-origin: 50% calc(165px - 6px);
+}
+.hist-clock-face .hist-marker.major {
+  width: 5px;
+  height: 18px;
+  top: 4px;
+  background: var(--ink);
+  transform-origin: 50% calc(165px - 4px);
+}
+.hist-clock-face .hist-num {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: 'Parkinsans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ink);
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+.hist-clock-face .hist-num.cardinal {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--primary-dark);
+}
+.hist-center-dot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--primary);
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  border: 3px solid var(--surface);
+}
+.hist-activity-dot {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2.5px solid var(--primary);
+  z-index: 5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  line-height: 1;
+  background: var(--surface);
+  transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 3px 10px rgba(0,0,0,.22);
+  user-select: none;
+}
+.hist-activity-dot.dot-am {
+  box-shadow: 0 2px 8px rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,0.7);
+}
+.hist-activity-dot.dot-pm {
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+.hist-activity-dot:hover {
+  transform: scale(1.35);
+  box-shadow: 0 6px 18px rgba(0,0,0,.38);
+  z-index: 8;
+}
+.hist-orbit-legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  opacity: 0.9;
+  text-align: center;
+  margin-top: 6px;
+}
+
+.hist-rhythm-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+.hist-rhythm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.hist-day-ribbon {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  max-height: 450px;
+  overflow-y: auto;
+  padding: 4px 4px 14px 4px;
+  width: 100%;
+  align-content: start;
+}
+.hist-day-ribbon::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.hist-day-ribbon::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+/* Historical Event Cards Grid */
+.hist-event-card {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+  text-align: left;
+}
+.hist-event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+.hist-event-card .hec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.hist-event-card .hec-time {
+  font-family: 'Parkinsans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  background: var(--surface-2);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.hist-event-card .hec-kind-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.hist-event-card.med .hec-kind-badge { background: #FEE2E2; color: #DC2626; }
+.hist-event-card.med-taken .hec-kind-badge { background: #DCFCE7; color: #16A34A; }
+.hist-event-card.med-skip .hec-kind-badge { background: #F3F4F6; color: #6B7280; }
+.hist-event-card.motor-on .hec-kind-badge { background: #DCFCE7; color: #16A34A; }
+.hist-event-card.motor-dys .hec-kind-badge { background: #FEF9C3; color: #CA8A04; }
+.hist-event-card.motor-off .hec-kind-badge { background: #FEE2E2; color: #DC2626; }
+.hist-event-card.mood .hec-kind-badge { background: #EDE9FE; color: #7C3AED; }
+.hist-event-card.meal .hec-kind-badge, .hist-event-card.protein .hec-kind-badge { background: #FEF3C7; color: #D97706; }
+.hist-event-card.drink .hec-kind-badge { background: #DBEAFE; color: #2563EB; }
+.hist-event-card.symptom .hec-kind-badge { background: #FEE2E2; color: #B91C1C; }
+.hist-event-card.gait .hec-kind-badge { background: #EDE9FE; color: #6D28D9; }
+.hist-event-card.exercise .hec-kind-badge { background: #D1FAE5; color: #059669; }
+.hist-event-card.sleep .hec-kind-badge { background: #EDE9FE; color: #7C3AED; }
+
+.hist-event-card .hec-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hist-event-card .hec-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.hist-event-card .hec-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.hist-event-card .hec-detail {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
 
 .log-panels {
   display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
@@ -562,6 +1172,42 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .field .range-val { font-weight:700; font-size:1.3rem; margin-left:12px; min-width:28px; text-align:center; }
 .modal-actions { display:flex; gap:18px; margin-top:30px; flex-wrap:wrap; }
 .modal-actions .btn { flex:1; justify-content:center; min-height:76px; font-size:1.3rem; }
+.modal-actions.edit-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+}
+.modal-actions.edit-modal-actions .btn {
+  width: 100%;
+  padding: 16px 12px;
+  font-size: 1.15rem;
+  min-height: 66px;
+}
+@media (max-width: 680px) {
+  .modal-actions.edit-modal-actions {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+#saveEditBtn {
+  background: #16A34A !important;
+  border-color: #15803D !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+}
+#saveEditBtn:hover {
+  background: #15803D !important;
+}
+#deleteEntryBtn {
+  color: #DC2626 !important;
+  border-color: rgba(220, 38, 38, 0.45) !important;
+  background: rgba(220, 38, 38, 0.08) !important;
+  font-weight: 800 !important;
+}
+#deleteEntryBtn:hover {
+  background: rgba(220, 38, 38, 0.18) !important;
+}
 
 .btn {
   border:3px solid var(--line); background:var(--surface); color:inherit;
@@ -1626,6 +2272,9 @@ body.theme-dark .habit-edit-limit-row input[type="number"] {
 .exergame-card.dino .exergame-preview-banner {
   background: linear-gradient(135deg, #dcfce7, #bae6fd);
 }
+.exergame-card.reach .exergame-preview-banner {
+  background: linear-gradient(135deg, #ffe4e6, #fecdd3);
+}
 .exergame-icon-huge {
   font-size: 4.2rem;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
@@ -1744,6 +2393,186 @@ body.theme-dark .habit-edit-limit-row input[type="number"] {
   height: 100%;
   border: none;
   background: #000;
+}
+
+/* AI Workout Routine Studio */
+.workout-preset-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.workout-preset-chip {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  color: var(--ink);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.workout-preset-chip:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.workout-preset-chip.active {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.workout-builder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+.workout-square-tile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 10px;
+  background: var(--surface);
+  border: 2.5px solid var(--line);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 140px;
+  user-select: none;
+}
+.workout-square-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary);
+}
+.workout-square-tile.included {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+.tile-check-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+.workout-square-tile.included .tile-check-indicator {
+  background: #22c55e;
+  border-color: #16a34a;
+}
+.tile-emoji {
+  font-size: 2.3rem;
+  line-height: 1;
+  margin-top: 4px;
+  transition: transform 0.2s ease;
+}
+.workout-square-tile:hover .tile-emoji {
+  transform: scale(1.1);
+}
+.tile-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--ink);
+  text-align: center;
+  margin: 6px 0 4px;
+  line-height: 1.25;
+}
+.tile-rep-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 6px;
+  z-index: 3;
+  width: 100%;
+  max-width: 110px;
+}
+.tile-rep-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tile-rep-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.tile-rep-val {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--ink);
+  min-width: 44px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hover Description Card Overlay */
+.tile-desc-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.94);
+  color: #f8fafc;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 15px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+.workout-square-tile:hover .tile-desc-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+.tile-desc-title {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: #38bdf8;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tile-desc-text {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #cbd5e1;
 }
 
 @media print {
